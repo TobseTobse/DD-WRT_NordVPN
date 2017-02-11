@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v1.06                                       #
+#   VPN speed check script v1.07                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -102,6 +102,10 @@ else
     NOW=`date +%s`
     LASTUPDATED=`date -r $JFFSPATH/$XMLFILE +%s`
     DIFFSECONDS=$(($NOW-$LASTUPDATED))
+    if [ ! -f "$JFFSPATH/$XMLFILE" ]; then
+      echo Creating speedtest servers list.
+      LASTUPDATED=0
+    fi
     XMLUPDATESECONDS=$(($XMLUPDATEMINUTES*60))
     COMPARISON=`echo | awk -v me=$DIFFSECONDS -v mi=$XMLUPDATESECONDS '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
     if [ "$COMPARISON" == "greater" ]; then
