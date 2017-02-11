@@ -1,5 +1,7 @@
 ## DD-WRT NordVPN scripts
 
+### Synopsis
+
 The purpose of this project is to enable a router liberated by DD-WRT to connect to the service [NordVPN](https://nordvpn.com).
 All the clients in the network attached to the router will be able to use NordVPN via one login.
 The author of this software is in no way associated with embeDD GmbH or the hosting company NordVPN.
@@ -141,18 +143,18 @@ You can get the OpenVPN files from https://nordvpn.com/ovpn but will have to spl
 Take one example from the serverconfigs directory and split the .upd1194.ovpn file into three files like in the example you have picked.
 I will try to update the server configuration files on GitHub occasionally to save you the hassle from doing this yourself.
 
-## WTF...? I found new files in the /jffs directory
+### WTF...? I found new files in the /jffs directory
 
 Breathe. It's all good. The VPN scripts write the following files into /jffs:
 - *servers.good.log*: a log with measured connection speeds of servers above the configured speed threshold
 - *servers.bad.log*: a log with measured connection speeds of servers below the configured speed threshold
 - *speedtestservers.xml*: this file contains servers via which the connection speed can be measured
 
-## Troubleshooting
+### Troubleshooting
 
 The scripts don't run on your DD-WRT router? Dang! Try a different version of DD-WRT. DD-WRT releases are buggy sometimes.
 
-## License
+### License
 
 This project is released under the MIT License
 
