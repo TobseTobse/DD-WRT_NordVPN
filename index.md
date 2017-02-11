@@ -42,7 +42,21 @@ Save this as **Firewall** with the button below.
 This is a [kill switch](https://en.wikipedia.org/wiki/Internet_kill_switch). I highly recommend doing this.
 With these rules you prevent the router from letting devices in the intranet access the internet if the VPN connection is down.
 
-In the DD-WRT menu navigate to _Services_ and enable SSHd. Now reboot the router.
+In the DD-WRT menu navigate to _Services_ and enable SSHd. We will need this to connect to the router later.
+Last we need some cron jobs to be defined.
+Head over to _Administration > Management_ in the DD-WRT menu. In the **Cron** section hit **Enable**.
+In the "Additional Cron Jobs" textbox enter the following (be sure to have the last line empty):
+
+```
+*/5 * * * * root /jffs/usr/bin/checkcon 2>&1
+58 * * * * root killall -q vpn
+59 * * * * root killall -q speedtest
+ 0 * * * * root /jffs/usr/bin/speedcheck 2>&1
+```
+
+These jobs regularly check your internet connection and take on measurements if necessary (changing the VPN server or rebooting).
+
+Now reboot the router.
 
 When the router is back up use a tool like [WinSCP](https://winscp.net) to upload the scripts to /jffs.
 Use a tool like [PuTTY](http://www.putty.org) and connect to your router.
@@ -55,7 +69,7 @@ chmod ugo+x *
 
 Now let's define an initial VPN server to connect to. In the DD-WRT menu go to _Services > VPN_.
 Pick one of the server configs you would like to connect to per default after the router has booted.
-You find these files in the serverconfigs/ directory.
+You find these files in the serverconfigs directory.
 In the **OpenVPN Client** section fill the fields as follows:
 
 - Start OpenVPN Client: Enable
@@ -86,3 +100,43 @@ For all other fields not mentioned above: _leave empty or unchanged_
 
 Save and reboot your router.
 You should be good to go now.
+
+### Check your external IP address
+
+First of all we would like to know whether we are using NordVPN or not right now.
+Connect your device with the DD-WRT router and disable all other connections from your device to any networks.
+Now check your IP at https://ipinfo.io. Does this look any familiar? No? Good, then you are connected via a NordVPN exit node ;-)
+
+### Tweaking the script configurations
+
+Usually, the scripts should work without any intervention from your side. The core of the scripts is in /jffs/usr/bin.
+You can tweak these scripts if you urgently feel the need to do so. In all other cases I recommend to refrain from doing that.
+When you edit the scripts you will be able to change a few values in their respective head sections.
+Please do not edit below the "configuration end" line.
+
+### Usage of the scripts
+
+If you connect to your router via SSH or Telnet you can call the scripts like that:
+
+`checkcon`
+
+This script checks if you can ping the host specified in the script configuration.
+By default wikipedia.org is pinged 20 times. If there are not enough pongs coming back this script will change the VPN server.
+
+`speedcheck`
+
+This script first invokes the _checkcon_ script. If the connection is okay the script proceeds to the following step:
+It downloads a 10 MB test file from a server which is in the same country as the VPN server.
+If the connection speed is below the predefined threshold the script will change the VPN server.
+
+`vpn _server shortcut_`
+
+This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca06` or `vpn nl03`).
+When you call the script with `vpn *` it will switch to a randomly selected VPN server from the list in the serverconfigs directory.
+
+### Updating the server configuration files
+
+It may happen that one day NordVPN will change (add, remove, modify) servers. Unfortunately, there is no easy way to handle this yet.
+You can get the OpenVPN files from https://nordvpn.com/ovpn but will have to split them manually to comply with the expected syntax.
+Take one example from the serverconfigs directory and split the .upd1194.ovpn file into three files like in the example you have picked.
+I will try to update the server configuration files here occasionally to save you the hassle from doing this yourself.
