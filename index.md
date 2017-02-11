@@ -139,4 +139,4 @@ When you call the script with `vpn *` it will switch to a randomly selected VPN 
 It may happen that one day NordVPN will change (add, remove, modify) servers. Unfortunately, there is no easy way to handle this yet.
 You can get the OpenVPN files from https://nordvpn.com/ovpn but will have to split them manually to comply with the expected syntax.
 Take one example from the serverconfigs directory and split the .upd1194.ovpn file into three files like in the example you have picked.
-I will try to update the server configuration files here occasionally to save you the hassle from doing this yourself.
+I will try to update the server configuration files on GitHub occasionally to save you the hassle from doing this yourself.
