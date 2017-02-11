@@ -129,7 +129,7 @@ This script first invokes the _checkcon_ script. If the connection is okay the s
 It downloads a 10 MB test file from a server which is in the same country as the VPN server.
 If the connection speed is below the predefined threshold the script will change the VPN server.
 
-`vpn _server shortcut_`
+`vpn {server shortcut}`
 
 This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca06` or `vpn nl03`).
 When you call the script with `vpn *` it will switch to a randomly selected VPN server from the list in the serverconfigs directory.
