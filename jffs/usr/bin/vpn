@@ -1,0 +1,192 @@
+#!/bin/sh
+
+########################################################################
+#                                                                      #
+#   VPN connector script v1.06                                         #
+#   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
+#                                                                      #
+#   This script must be located on a USB stick, mounted on /jffs and   #
+#   expects the presence of the speed check script in /jffs/usr/bin/.  #
+#   All scripts must be "chmod ugo+x" in order to be executable.       #
+#   The script also expects the presence of the prepared VPN           #
+#   configuration files, sorted into directories at the defined        #
+#   config files directory, containing the files ca.crt,               #
+#   openvpn.conf and ta.key. See the files with these names at         #
+#   /tmp/openvpncl for the syntax.                                     #
+#                                                                      #
+########################################################################
+
+# define VPN interface (see "route -n" when connected)
+# default: tun1
+VPNINTERFACE=tun1
+
+# directory containing the prepared VPN configuration files
+# default: /jffs/serverconfigs
+CONFIGFILESDIR=/jffs/serverconfigs
+
+# path to file containing the name of the current server
+# default: /jffs/currentserver
+CURRENTSERVERFILE=/jffs/currentserver
+
+# path to file containing the name of the current country
+# default: /jffs/currentcountry
+CURRENTCOUNTRYFILE=/jffs/currentcountry
+
+# path to countries JSON
+# default: /jffs/
+JFFSPATH=/jffs/
+
+# name of JSON file with countries shortcuts
+# default: countries.json
+COUNTRIESJSON=countries.json
+
+# path to speed test script
+# default: /jffs/usr/bin/speedcheck
+SPEEDTESTSCRIPT=/jffs/usr/bin/speedcheck
+
+# configuration end. Hands off below this line please.
+
+
+# kill all speedcheck scripts
+killall -q speedcheck
+
+PARAM1="$1"
+
+# check for empty parameter 1
+if [ "$PARAM1" == "" ]; then
+  echo You must specify a server directory as parameter from the following list:
+  ls $CONFIGFILESDIR
+  exit 1
+fi
+
+# check for wrong parameter 1
+if [ "$PARAM1" != "*" ]; then
+  if [ ! -d "$CONFIGFILESDIR/$PARAM1/" ]; then
+    echo Directory $CONFIGFILESDIR/$PARAM1/ doesn\'t exist.
+    exit 1
+  fi
+fi
+
+# if parameter 1 is "*" user wants a random server
+# read server configuration directories
+if [ "$PARAM1" == "*" ]; then
+  SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
+
+  # count amount of directories
+  AMT=0
+  for SERVERDIR in $SERVERDIRS ; do
+    if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
+      let AMT=$AMT+1
+    fi
+  done
+
+  # generate random number
+  # between 1 and amount of server directories
+  RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+
+  # now pick #$RND from list
+  CNT=0
+  for SERVERDIR in $SERVERDIRS ; do
+    if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
+      let CNT=$CNT+1
+    fi
+    if [ $CNT -eq $RND ]; then
+      SERVER=`echo $SERVERDIR | sed "s|$CONFIGFILESDIR/||g"`
+      echo Connecting to server $SERVER.
+      PARAM1=$SERVER
+    fi
+  done
+fi
+
+# init
+OLDIP=`wget -T 3 -t 3 http://ipinfo.io/ip -qO -`
+NEWIP=$OLDIP
+
+# check if we're conencted to the VPN
+VPNROUTE=`route -n | grep $VPNINTERFACE`
+if [ "$VPNROUTE" == "" ]; then
+  echo We\'re not connected to the VPN.
+else
+  # drop the VPN
+  echo Current IPv4 is $OLDIP
+  CNT=0
+  killall openvpn
+  printf "Waiting for the VPN to drop."
+  while [ $CNT -le 59 ] && [ "$NEWIP" == "$OLDIP" ]
+  do
+    sleep 1
+    let CNT=$CNT+1
+    printf "."
+    NEWIP=$OLDIP
+    VPNROUTE=`route -n | grep $VPNINTERFACE`
+    if [ "$VPNROUTE" == "" ]; then
+      NEWIP=`wget -T 3 -t 3 http://ipinfo.io/ip -qO -`
+    fi
+  done
+  echo ""
+fi
+echo Current IPv4 is $NEWIP.
+
+# copy given server files and restart the VPN
+cp $CONFIGFILESDIR/$PARAM1/* /tmp/openvpncl/
+openvpn --config /tmp/openvpncl/openvpn.conf --route-up /tmp/openvpncl/route-up.sh --down-pre /tmp/openvpncl/route-down.sh --daemon
+
+# wait for new IPv4
+OLDIP=$NEWIP
+CNT=0
+SLEEP=1
+printf "Waiting for the VPN to come up."
+while [ $CNT -le 29 ] && [ "$NEWIP" == "$OLDIP" ]
+do
+  sleep $SLEEP
+  let CNT=$CNT+1
+  printf "."
+  NEWIP=$OLDIP
+  VPNROUTE=`route -n | grep $VPNINTERFACE`
+  if [ "$VPNROUTE" != "" ]; then
+    NEWIP=`wget -T 3 -t 3 http://ipinfo.io/ip -qO -`
+  fi
+done
+
+# echo new IPv4, city and country
+echo ""
+if [ "$NEWIP" == "$OLDIP" ]; then
+  echo IPv4 hasn\'t changed.
+  VPNROUTE=`route -n | grep $VPNINTERFACE`
+  if [ "$VPNROUTE" == "" ]; then
+    echo Houston, we have a problem. We\'re not connected to the VPN.
+    echo Rebooting router.
+    reboot
+    exit 1
+  fi
+else
+  echo Current server is $PARAM1.
+  echo $PARAM1 > $CURRENTSERVERFILE
+  echo New IPv4 is $NEWIP.
+  CITY=`wget -T 3 -t 3 http://ipinfo.io/city -qO -`
+  if [ "$CITY" == "" ]; then
+    CITY="an unknown city"
+  fi
+  REGION=`wget -T 3 -t 3 http://ipinfo.io/region -qO -`
+  if [ "$REGION" == "" ]; then
+    REGION="region unknown"
+  fi
+  ISP=`wget -T 3 -t 3 http://ipinfo.io/org -qO -`
+  if [ "$ISP" == "" ]; then
+    ISP="an unknown ISP"
+  fi
+  COUNTRYCODE=`wget -T 3 -t 3 http://ipinfo.io/country -qO -`
+  echo $COUNTRYCODE > $CURRENTCOUNTRYFILE
+  if [ "$COUNTRYCODE" == "" ]; then
+    COUNTRY="country unknown"
+  else
+    if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ]; then
+      wget -q http://country.io/names.json -P $JFFSPATH -O $COUNTRIESJSON
+    fi
+    COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | egrep -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | egrep -o '[^\"]{3,}'`
+  fi
+  echo New geolocation is $CITY, region $REGION, $COUNTRY.
+  echo Our end service provider is $ISP.
+fi
+
+$SPEEDTESTSCRIPT

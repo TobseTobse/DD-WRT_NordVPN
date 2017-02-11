@@ -1,0 +1,199 @@
+#!/bin/sh
+
+########################################################################
+#                                                                      #
+#   VPN speed check script v1.06                                       #
+#   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
+#                                                                      #
+#   This script must be located on a USB stick, mounted on /jffs and   #
+#   expects the presence of /jffs/usr/bin/vpn. All scripts must be     #
+#   "chmod ugo+x" in order to be executable. You might wanna call it   #
+#   by cron similar to that (mind "root" in the following line):       #
+#   */15 * * * * root /jffs/usr/bin/speedtest 2>&1                     #
+#                                                                      #
+########################################################################
+
+# minimum speed in Mbit/s you expect from the VPN connection
+# default: 2
+MINIMUMSPEED=2
+
+# define VPN interface (see "route -n" when connected)
+# default: tun1
+VPNINTERFACE=tun1
+
+# path to VPN script
+# default: /jffs/usr/bin/vpn
+VPNSCRIPT=/jffs/usr/bin/vpn
+
+# path to connection check script
+# default: /jffs/usr/bin/checkcon
+CCSCRIPT=/jffs/usr/bin/checkcon
+
+# path to file containing the name of the current server
+# default: /jffs/currentserver
+CURRENTSERVERFILE=/jffs/currentserver
+
+# path to file containing the name of the current country
+# default: /jffs/currentcountry
+CURRENTCOUNTRYFILE=/jffs/currentcountry
+
+# directory containing the prepared VPN configuration files
+# default: /jffs/serverconfigs
+CONFIGFILESDIR=/jffs/serverconfigs
+
+# log server speeds equal or higher than minimum speed to this file
+# default: /jffs/servers.good.log
+GOODLOGFILE=/jffs/servers.good.log
+
+# log server speeds lower than minimum speed to this file
+# default: /jffs/servers.bad.log
+BADLOGFILE=/jffs/servers.bad.log
+
+# path to speedtest server XML
+# default: /jffs/speedtestservers.xml
+XMLFILE=/jffs/speedtestservers.xml
+
+# update server XML once in at least that many minutes
+# default: 180
+XMLUPDATEMINUTES=180
+
+# configuration end. Hands off below this line please.
+
+
+# kill all vpn connection scripts
+killall -q vpn
+
+# check if we're connected to the internet
+$CCSCRIPT
+
+# check if we're connected to the VPN
+VPNROUTE=`route -n | grep $VPNINTERFACE`
+if [ "$VPNROUTE" == "" ]; then
+  echo VPN has no route. That means we\'re not connected.
+else
+
+  # get current country
+  CURRENTCOUNTRYCODE=`cat $CURRENTCOUNTRYFILE`
+
+  if [ "$1" == "checkonly" ]; then
+    echo Just checking...
+  fi
+
+  # if current country unknown do 10 MB test with softlayer.com
+  if [ "$CURRENTCOUNTRYCODE" == "" ]; then
+    # download 10 MB .zip to measure the time it took
+    echo Testing against speedtest.wdc01.softlayer.com.
+    echo Downloading a 10 MB dummy file to measure the download speed.
+    RESULT=`time wget -O /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
+
+    # do some string acrobatics to calculate connection speed...
+    REALTIME=`echo $RESULT | egrep -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+    MINUTES=`echo $REALTIME | egrep -o '[0-9\.]+?m' | egrep -o '[0-9\.]+?'`
+    SECONDS=`echo $REALTIME | egrep -o '[0-9\.]+?s' | egrep -o '[0-9\.]+?'`
+    SECONDS=${SECONDS/\.*}
+    TOTALSECONDS=`expr $MINUTES \\* 60 + $SECONDS`
+    MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",80/${TOTALSECONDS}}")
+
+  # otherwise execute much more performant and precise country based test
+  else
+
+    # update speedtest servers XML file if it's older than XMLUPDATEMINUTES hours
+    # (if we can't get the update, we will probably still have an older version)
+    NOW=`date +%s`
+    LASTUPDATED=`date -r $JFFSPATH/$XMLFILE +%s`
+    DIFFSECONDS=$(($NOW-$LASTUPDATED))
+    XMLUPDATESECONDS=$(($XMLUPDATEMINUTES*60))
+    COMPARISON=`echo | awk -v me=$DIFFSECONDS -v mi=$XMLUPDATESECONDS '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
+    if [ "$COMPARISON" == "greater" ]; then
+      echo Updating speedtest servers list.
+      wget -q http://www.speedtest.net/speedtest-servers.php -O $XMLFILE
+    else
+      printf "Servers list file is up to date. It's "
+      printf "%d " "$(($DIFFSECONDS/60))"
+      printf minute
+      COMPARISON=`echo | awk -v me=$DIFFSECONDS '{if (me<60 || me>119) printf ("plural"); else printf ("singular") }'`
+      if [ "$COMPARISON" == "plural" ]; then
+        printf s
+      fi
+      echo " old."
+    fi
+
+    # get a random speed server for the current country
+    SPEEDSERVER=""
+    CNT=0
+    while [ $CNT -le 100 ] && [ "$SPEEDSERVER" == "" ]
+    do
+
+      # get speed test servers for current country
+      SPEEDSERVERS=$(cat "$JFFSPATH"/"$XMLFILE" | awk 'gsub(/ /, "___")' | grep "cc=\"$CURRENTCOUNTRYCODE\"")
+
+      # count amount of speed servers in this country
+      AMT=0
+      for SPEEDSERVER in $SPEEDSERVERS ; do
+        let AMT=$AMT+1
+      done
+
+      # generate random number
+      # between 1 and amount of server directories
+      RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+
+      # now pick random server from current country's speed servers
+      CNT2=0
+      for SPEEDSERVER in $SPEEDSERVERS ; do
+        let CNT2=$CNT2+1
+        if [ $CNT2 -eq $RND ]; then
+          URL=`echo $SPEEDSERVER | egrep -o 'url="[^"]+?"' | sed 's|url="||g' | sed 's|/upload\.[^"]*"||gI'`
+        fi
+      done
+      SPEEDSERVER=`echo $URL | sed 's|http://||gI' | sed 's|/.*$||g'`
+      let CNT=$CNT+1
+    done
+
+    # download 1500x1500px random image to measure the time it took
+    echo Testing against $SPEEDSERVER \($CURRENTCOUNTRYCODE\).
+    echo Downloading a 1500x1500px random image to measure the download speed.
+    RESULT=`time wget -O /dev/null $URL/random1500x1500.jpg 2>&1`
+
+    # do some string acrobatics to calculate connection speed...
+    REALTIME=`echo $RESULT | egrep -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+    MINUTES=`echo $REALTIME | egrep -o '[0-9\.]+?m' | egrep -o '[0-9\.]+?'`
+    SECONDS=`echo $REALTIME | egrep -o '[0-9\.]+?s' | egrep -o '[0-9\.]+?'`
+    SECONDS=${SECONDS/\.*}
+    TOTALSECONDS=`expr $MINUTES \\* 60 + $SECONDS`
+    MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",((4468241/1024/1024)*8)/${TOTALSECONDS}}")
+
+  fi
+  if [ "$MEASUREDSPEED" == "" ]; then
+    echo Error: couldn\'t measure speed.
+    exit 0
+  else
+    echo The download took $TOTALSECONDS seconds.
+    echo This equals a speed of $MEASUREDSPEED Mbit/s.
+
+    # prepare logging
+    CURRENTSERVER=`cat $CURRENTSERVERFILE`
+    NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
+
+    # exit script if measured speed > minimum speed
+    COMPARISON=`echo | awk -v me=$MEASUREDSPEED -v mi=$MINIMUMSPEED '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
+    if [ "$COMPARISON" == "greater" ]; then
+      # log good speed to file
+      echo $NOWSTAMP $CURRENTSERVER: $MEASUREDSPEED Mbit/s >> $GOODLOGFILE
+      echo That\'s fast enough.
+      exit 0
+    fi
+
+    # log miserable speed to file
+    echo That\'s less than the configured minimum of $MINIMUMSPEED Mbit/s.
+    if [ -f $CURRENTSERVERFILE ]; then
+      echo $NOWSTAMP $CURRENTSERVER: $MEASUREDSPEED Mbit/s >> $BADLOGFILE
+    fi
+  fi
+fi
+
+if [ "$1" == "checkonly" ]; then
+  echo Taking no actions.
+  exit 0
+fi
+
+$VPNSCRIPT *
