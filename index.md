@@ -29,11 +29,12 @@ This will mount your USB stick when the router boots up to /jffs.
 
 Now enter the following into the textbox:
 
-`iptables -I FORWARD -i br0 -o tun0 -j ACCEPT`
-`iptables -I FORWARD -i tun0 -o br0 -j ACCEPT`
-`iptables -I FORWARD -i br0 -o $(nvram get wan_iface) -j DROP`
-`iptables -I INPUT -i tun0 -j REJECT`
-`iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE`
+```iptables -I FORWARD -i br0 -o tun0 -j ACCEPT
+iptables -I FORWARD -i tun0 -o br0 -j ACCEPT
+iptables -I FORWARD -i br0 -o $(nvram get wan_iface) -j DROP
+iptables -I INPUT -i tun0 -j REJECT
+iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
+```
 
 Save this as **Firewall** with the button below.
 
@@ -46,37 +47,38 @@ When the router is back up use a tool like [WinSCP](https://winscp.net) to uploa
 Use a tool like [PuTTY](http://www.putty.org) and connect to your router.
 Now let's make the scripts executable:
 
-`cd /jffs/usr/bin
-chmod ugo+x *`
+```cd /jffs/usr/bin
+chmod ugo+x *
+```
 
 Now let's define an initial VPN server to connect to. In the DD-WRT menu go to _Services > VPN_.
 Pick one of the server configs you would like to connect to per default after the router has booted.
 You find these files in the serverconfigs/ directory.
 In the **OpenVPN Client** section fill the fields as follows:
 
-Start OpenVPN Client: Enable
-Server IP/Name: _get the ip address from the "remote" line in openvpn.conf_
-Port: 1194
-Tunnel Device: TUN
-Tunnel Protocol: UDP
-Encryption Cipher: AES-256 CBC
-Hash Algorithm: SHA1
-**User Pass Authentication: Enable**
-Username: _Your NordVPN username_
-Password: _Your NordVPN password_
-Advances Options: Enable
-TLS Ciper: None
-LZO Compression: Adaptive
-NAT: _up to you_
-Firewall Protection: Enable
-IP Address: _leave empty_
-Subnet Mask: _leave empty_
-Tunnel MTU setting: 1500
-Tunnel UDP Fragment: _leave empty_
-Tunnel UDP MSS-Fix: Disable
-nsCertType verification: nope
-TLS Auth Key: _copy & paste the content of the ta.key file in the chosen serverconfig directory_
-CA Cert: _copy & paste the content of the ca.crt file in the chosen serverconfig directory_
+- Start OpenVPN Client: Enable
+- Server IP/Name: _get the ip address from the "remote" line in openvpn.conf_
+- Port: 1194
+- Tunnel Device: TUN
+- Tunnel Protocol: UDP
+- Encryption Cipher: AES-256 CBC
+- Hash Algorithm: SHA1
+- **User Pass Authentication: Enable**
+- Username: _Your NordVPN username_
+- Password: _Your NordVPN password_
+- Advanced Options: Enable
+- TLS Ciper: None
+- LZO Compression: Adaptive
+- NAT: _up to you_
+- Firewall Protection: Enable
+- IP Address: _leave empty_
+- Subnet Mask: _leave empty_
+- Tunnel MTU setting: 1500
+- Tunnel UDP Fragment: _leave empty_
+- Tunnel UDP MSS-Fix: Disable
+- nsCertType verification: nope
+- TLS Auth Key: _copy & paste the content of the ta.key file in the chosen serverconfig directory_
+- CA Cert: _copy & paste the content of the ca.crt file in the chosen serverconfig directory_
 
 For all other fields not mentioned above: _leave empty or unchanged_
 
