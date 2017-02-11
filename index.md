@@ -148,6 +148,10 @@ Breathe. It's all good. The VPN scripts write the following files into /jffs:
 - *servers.bad.log*: a log with measured connection speeds of servers below the configured speed threshold
 - *speedtestservers.xml*: this file contains servers via which the connection speed can be measured
 
+## Troubleshooting
+
+The scripts don't run on your DD-WRT router? Dang! Try a different version of DD-WRT. DD-WRT releases are buggy sometimes.
+
 ## License
 
 This project is released under the MIT License
