@@ -29,11 +29,11 @@ This will mount your USB stick when the router boots up to /jffs.
 
 Now enter the following into the textbox:
 
-`iptables -I FORWARD -i br0 -o tun0 -j ACCEPT
-iptables -I FORWARD -i tun0 -o br0 -j ACCEPT
-iptables -I FORWARD -i br0 -o $(nvram get wan_iface) -j DROP
-iptables -I INPUT -i tun0 -j REJECT
-iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE`
+`iptables -I FORWARD -i br0 -o tun0 -j ACCEPT`
+`iptables -I FORWARD -i tun0 -o br0 -j ACCEPT`
+`iptables -I FORWARD -i br0 -o $(nvram get wan_iface) -j DROP`
+`iptables -I INPUT -i tun0 -j REJECT`
+`iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE`
 
 Save this as **Firewall** with the button below.
 
