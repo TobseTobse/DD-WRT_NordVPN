@@ -29,7 +29,8 @@ This will mount your USB stick when the router boots up to /jffs.
 
 Now enter the following into the textbox:
 
-```iptables -I FORWARD -i br0 -o tun0 -j ACCEPT
+```
+iptables -I FORWARD -i br0 -o tun0 -j ACCEPT
 iptables -I FORWARD -i tun0 -o br0 -j ACCEPT
 iptables -I FORWARD -i br0 -o $(nvram get wan_iface) -j DROP
 iptables -I INPUT -i tun0 -j REJECT
@@ -47,7 +48,8 @@ When the router is back up use a tool like [WinSCP](https://winscp.net) to uploa
 Use a tool like [PuTTY](http://www.putty.org) and connect to your router.
 Now let's make the scripts executable:
 
-```cd /jffs/usr/bin
+```
+cd /jffs/usr/bin
 chmod ugo+x *
 ```
 
