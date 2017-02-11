@@ -130,6 +130,7 @@ By default wikipedia.org is pinged 20 times. If there are not enough pongs comin
 This script first invokes the _checkcon_ script. If the connection is okay the script proceeds to the following step:
 It downloads a 10 MB test file from a server which is in the same country as the VPN server.
 If the connection speed is below the predefined threshold the script will change the VPN server.
+You can call the script with a parameter: `speedcheck checkonly` doesn't change the VPN server if the measured bandwidth is too low.
 
 `vpn {server shortcut}`
 
