@@ -10,7 +10,7 @@ Furthermore, the author of this software does not take on any responsibilities f
 ### Prerequisites
 
 To run the shell scripts you need a router capable of running DD-WRT. You can check your router
-at http://dd-wrt.com/site/support/router-database. If it's not in the list get a decent router which is in the list.
+at https://dd-wrt.com/site/support/router-database. If it's not in the list get a decent router which is in the list.
 The router must dispose of a USB slot. If it doesn't have a USB slot get a decent router which has a USB slot.
 Then follow the instructions on dd-wrt.com to get the DD-WRT firmware running on your router.
 When DD-WRT is up and running ensure that an OpenVPN client is available (_Services > VPN_) and supports User Pass Authentication.
