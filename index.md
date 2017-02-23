@@ -140,9 +140,11 @@ When you call the script with `vpn *` it will switch to a randomly selected VPN 
 ### Updating the server configuration files
 
 It may happen that one day NordVPN will change (add, remove, modify) servers. Unfortunately, there is no easy way to handle this yet.
-You can get the OpenVPN files from https://nordvpn.com/ovpn but will have to split them manually to comply with the expected syntax.
-Take one example from the serverconfigs directory and split the .upd1194.ovpn file into three files like in the example you have picked.
-I will try to update the server configuration files on GitHub occasionally to save you the hassle from doing this yourself.
+If you want to convert the OpenVPN files yourself you can download the ".upd1194.ovpn" files from https://nordvpn.com/ovpn and parse them with [PHP[(https://secure.php.net). If you want to run PHP on your Windows machine you can use a framework like [XAMPP](https://www.apachefriends.org) or give it to someone who has a webserver running PHP. Put the ".upd1194.ovpn" files together with *make_serverconfig.php* into a directory and run it with
+
+`php make_serverconfig.php`
+
+If this is too much hassle for you just check on [the DD-WRT NordVPN project site](https://tobsetobse.github.io/DD-WRT_NordVPN) occasionally. I will try to keep the server configuration files a bit up-to-date but I won't include servers from US, UK and DE. Deal with it 8-)
 
 ### WTF...? I found new files in the /jffs directory
 
