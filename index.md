@@ -135,7 +135,7 @@ You can call the script with a parameter: `speedcheck checkonly` doesn't change 
 `vpn {server shortcut}`
 
 This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca06` or `vpn nl03`).
-When you call the script with `vpn *` it will switch to a randomly selected VPN server from the list in the serverconfigs directory.
+When you call the script with `vpn rnd` it will switch to a randomly selected VPN server from the list in the serverconfigs directory.
 
 ### Updating the server configuration files
 
