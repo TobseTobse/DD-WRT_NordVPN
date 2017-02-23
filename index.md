@@ -10,7 +10,7 @@ Furthermore, the author of this software does not take on any responsibilities f
 ### Prerequisites
 
 To run the shell scripts you need a router capable of running DD-WRT. You can check your router
-at http://dd-wrt.com/site/support/router-database. If it's not in the list get a decent router which is in the list.
+at https://dd-wrt.com/site/support/router-database. If it's not in the list get a decent router which is in the list.
 The router must dispose of a USB slot. If it doesn't have a USB slot get a decent router which has a USB slot.
 Then follow the instructions on dd-wrt.com to get the DD-WRT firmware running on your router.
 When DD-WRT is up and running ensure that an OpenVPN client is available (_Services > VPN_) and supports User Pass Authentication.
@@ -135,12 +135,12 @@ You can call the script with a parameter: `speedcheck checkonly` doesn't change 
 `vpn {server shortcut}`
 
 This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca06` or `vpn nl03`).
-When you call the script with `vpn *` it will switch to a randomly selected VPN server from the list in the serverconfigs directory.
+When you call the script with `vpn rnd` it will switch to a randomly selected VPN server from the list in the serverconfigs directory.
 
 ### Updating the server configuration files
 
 It may happen that one day NordVPN will change (add, remove, modify) servers. Unfortunately, there is no easy way to handle this yet.
-If you want to convert the OpenVPN files yourself you can download the ".upd1194.ovpn" files from https://nordvpn.com/ovpn and parse them with [PHP[(https://secure.php.net). If you want to run PHP on your Windows machine you can use a framework like [XAMPP](https://www.apachefriends.org) or give it to someone who has a webserver running PHP. Put the ".upd1194.ovpn" files together with *make_serverconfig.php* into a directory and run it with
+If you want to convert the OpenVPN files yourself you can download the ".upd1194.ovpn" files from https://nordvpn.com/ovpn and parse them with [PHP](https://secure.php.net). If you want to run PHP on your Windows machine you can use a framework like [XAMPP](https://www.apachefriends.org) or give it to someone who has a webserver running PHP. Put the ".upd1194.ovpn" files together with *make_serverconfig.php* into a directory and run it with
 
 `php make_serverconfig.php`
 
