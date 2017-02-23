@@ -64,7 +64,7 @@ XMLUPDATEMINUTES=180
 killall -q vpn
 
 # check if we're connected to the internet
-$CCSCRIPT
+sh $CCSCRIPT
 
 # check if we're connected to the VPN
 VPNROUTE=`route -n | grep $VPNINTERFACE`
@@ -200,4 +200,4 @@ if [ "$1" == "checkonly" ]; then
   exit 0
 fi
 
-$VPNSCRIPT *
+$VPNSCRIPT rnd

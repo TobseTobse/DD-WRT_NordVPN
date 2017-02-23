@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v1.06                                         #
+#   VPN connector script v1.07                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -50,26 +50,28 @@ SPEEDTESTSCRIPT=/jffs/usr/bin/speedcheck
 # kill all speedcheck scripts
 killall -q speedcheck
 
+# get command line parameter
 PARAM1="$1"
 
 # check for empty parameter 1
 if [ "$PARAM1" == "" ]; then
-  echo You must specify a server directory as parameter from the following list:
+  echo Please a server directory as parameter from the following list:
   ls $CONFIGFILESDIR
+  echo If you\'re not sure which one to pick, just use "rnd" to pick a random server
   exit 1
 fi
 
 # check for wrong parameter 1
-if [ "$PARAM1" != "*" ]; then
+if [ "$PARAM1" != "rnd" ]; then
   if [ ! -d "$CONFIGFILESDIR/$PARAM1/" ]; then
     echo Directory $CONFIGFILESDIR/$PARAM1/ doesn\'t exist.
     exit 1
   fi
 fi
 
-# if parameter 1 is "*" user wants a random server
+# if parameter 1 is "rnd" user wants a random server
 # read server configuration directories
-if [ "$PARAM1" == "*" ]; then
+if [ "$PARAM1" == "rnd" ]; then
   SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
 
   # count amount of directories
