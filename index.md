@@ -60,7 +60,7 @@ These jobs regularly check your internet connection and take on measurements if 
 
 Now reboot the router.
 
-When the router is back up use a tool like [WinSCP](https://winscp.net) to upload the scripts to /jffs.
+When the router is back up use a tool like [WinSCP](https://winscp.net) to upload [the scripts](https://github.com/TobseTobse/DD-WRT_NordVPN/archive/master.zip) to /jffs.
 Use a tool like [PuTTY](http://www.putty.org) and connect to your router.
 Now let's make the scripts executable:
 
