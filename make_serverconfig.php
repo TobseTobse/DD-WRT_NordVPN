@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Serverconfig conversion script v2.01                               #
+#   Serverconfig conversion script v2.02                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script converts NordVPN OpenVPN files in the ovpn directory   #
