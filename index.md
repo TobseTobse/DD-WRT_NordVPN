@@ -18,7 +18,23 @@ If there is no User Pass Authentication in the OpenVPN client get a different ve
 You will also need a USB memory stick. Get the cheapest you can find at your local supplier, that will do. Size doesn't matter ;-)
 Last but not least you need a user account at [NordVPN](https://nordvpn.com) composed of username and password.
 
-### Configuring DD-WRT
+### Router behind router setup
+
+If you would like to connect your DD-WRT router to another router which is functioning as main router to the internet this step might be of interest for you. If your DD-WRT router is connected to the internet directly you can skip this step.
+Connect your DD-WRT router with an ordinary (preferably short) patch cable from its WAN port to one of the free LAN ports of your main router.
+
+Now navigate in the DD-WRT menu to Setup > Basic Setup. Make sure "Gateway" and "Local DNS" are set to 0.0.0.0 and Static DNS 1 is set to the DD-WRT router's intranet IP. Navigate to Setup > Advanced Routing and set the following options:
+
+- Operating Mode: Gateway
+- Dynamic Routing Interface: Disable
+- Route Name: _preferebly the name of your "outer" router_
+- Metric: 0
+- Destination LAN NET: _IP of "outer" router_
+- Subnet Mask: _netmask of "outer" intranet_
+- Gateway: _IP of "outer" router_
+- Interface: LAN & WAN
+
+### Configuring DD-WRT to use our scripts
 
 Put the USB memory stick into the slot. In the DD-WRT menu navigate to _Administration > Diagnosis_.
 Enter the following into the "commands" textbox:
@@ -87,7 +103,7 @@ In the **OpenVPN Client** section fill the fields as follows:
 - Advanced Options: Enable
 - TLS Ciper: None
 - LZO Compression: Adaptive
-- NAT: _up to you_
+- NAT: Enable
 - Firewall Protection: Enable
 - IP Address: _leave empty_
 - Subnet Mask: _leave empty_
