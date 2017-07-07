@@ -171,7 +171,9 @@ Breathe. It's all good. The VPN scripts write the following files into /jffs:
 
 ### Troubleshooting
 
-The scripts don't run on your DD-WRT router? Dang! Try a different version of DD-WRT. DD-WRT releases are buggy sometimes.
+- Try removing the kill switch we have added as firewall script. Open a website with a browser being connected to the DD-WRT router. Do you get a result? Then your hardware setup and routing is fine. No result? Dang! Try a different version of DD-WRT. DD-WRT releases are pretty buggy sometimes.
+- Assuming your hardware setup and routing are fine you can put back the kill switch now. Now navigate in the DD-WRT menu to Administration > Commands (Diagnostics) and enter the following command into the "Commands" box: `cat /tmp/openvpncl/openvpn.log` and click on the button "Run Commands" below. Does this help you any further? No? Then ask Google or a friend who knows a bit more about OpenVPN.
+
 
 ### License
 
