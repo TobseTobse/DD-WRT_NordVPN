@@ -69,9 +69,10 @@ foreach ($files as $filename) {
   // extract "ch1" or "lv-tor1" shortcut from filename
   $sc = preg_replace("%\.nordvpn\.com\.udp1194$%", "", $filename);
   
-  // well-form shortcut ("hk7" => "hk07")
-  if (preg_match("%[^\d]\d$%", $sc)) {
-    $sc = substr($sc, 0, -1) . "0" . substr($sc, -1);
+  // well-form shortcut ("hk7" => "hk007")
+  preg_match("%^([a-z]+?)(\d+)%i", $sc, $scParts);
+  if (is_array($scParts) && count($scParts) == 3) {
+    $sc = $scParts[1] . sprintf("%03d", $scParts[2]);
   }
   $sc = "serverconfigs/" . $sc;
 
