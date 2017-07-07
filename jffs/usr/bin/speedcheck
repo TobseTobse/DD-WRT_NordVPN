@@ -87,9 +87,9 @@ else
     RESULT=`time wget -O /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
 
     # do some string acrobatics to calculate connection speed...
-    REALTIME=`echo $RESULT | egrep -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
-    MINUTES=`echo $REALTIME | egrep -o '[0-9\.]+?m' | egrep -o '[0-9\.]+?'`
-    SECONDS=`echo $REALTIME | egrep -o '[0-9\.]+?s' | egrep -o '[0-9\.]+?'`
+    REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+    MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
+    SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
     SECONDS=${SECONDS/\.*}
     TOTALSECONDS=`expr $MINUTES \\* 60 + $SECONDS`
     MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",80/${TOTALSECONDS}}")
@@ -149,7 +149,7 @@ else
       for SPEEDSERVER in $SPEEDSERVERS ; do
         let CNT2=$CNT2+1
         if [ $CNT2 -eq $RND ]; then
-          URL=`echo $SPEEDSERVER | egrep -o 'url="[^"]+?"' | sed 's|url="||g' | sed 's|/upload\.[^"]*"||gI'`
+          URL=`echo $SPEEDSERVER | grep -E -o 'url="[^"]+?"' | sed 's|url="||g' | sed 's|/upload\.[^"]*"||gI'`
         fi
       done
       SPEEDSERVER=`echo $URL | sed 's|http://||gI' | sed 's|/.*$||g'`
@@ -162,9 +162,9 @@ else
     RESULT=`time wget -O /dev/null $URL/random1500x1500.jpg 2>&1`
 
     # do some string acrobatics to calculate connection speed...
-    REALTIME=`echo $RESULT | egrep -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
-    MINUTES=`echo $REALTIME | egrep -o '[0-9\.]+?m' | egrep -o '[0-9\.]+?'`
-    SECONDS=`echo $REALTIME | egrep -o '[0-9\.]+?s' | egrep -o '[0-9\.]+?'`
+    REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+    MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
+    SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
     SECONDS=${SECONDS/\.*}
     TOTALSECONDS=`expr $MINUTES \\* 60 + $SECONDS`
     MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",((4468241/1024/1024)*8)/${TOTALSECONDS}}")

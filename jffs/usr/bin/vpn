@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v1.07                                         #
+#   VPN connector script v2.02                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -131,7 +131,7 @@ echo Current IPv4 is $NEWIP.
 
 # copy given server files and restart the VPN
 cp $CONFIGFILESDIR/$PARAM1/* /tmp/openvpncl/
-openvpn --config /tmp/openvpncl/openvpn.conf --route-up /tmp/openvpncl/route-up.sh --down-pre /tmp/openvpncl/route-down.sh --daemon
+openvpn --config /tmp/openvpncl/openvpn.conf --route-up /tmp/openvpncl/route-up.sh --log /tmp/openvpncl/openvpn.log --daemon
 
 # wait for new IPv4
 OLDIP=$NEWIP
@@ -185,7 +185,7 @@ else
     if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ]; then
       wget -q http://country.io/names.json -P $JFFSPATH -O $COUNTRIESJSON
     fi
-    COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | egrep -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | egrep -o '[^\"]{3,}'`
+    COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | grep -E -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | grep -E -o '[^\"]{3,}'`
   fi
   echo New geolocation is $CITY, region $REGION, $COUNTRY.
   echo Our end service provider is $ISP.
