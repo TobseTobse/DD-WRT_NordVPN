@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v1.08                                       #
+#   VPN speed check script v1.09                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -15,7 +15,7 @@
 
 # minimum speed in Mbit/s you expect from the VPN connection
 # default: 2
-MINIMUMSPEED=2
+MINIMUMSPEED=.69
 
 # define VPN interface (see "route -n" when connected)
 # default: tun1
