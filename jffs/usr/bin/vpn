@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v2.02                                         #
+#   VPN connector script v2.03                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -101,7 +101,7 @@ if [ "$PARAM1" == "rnd" ]; then
 fi
 
 # init
-OLDIP=`wget -T 3 -t 3 http://ipinfo.io/ip -qO -`
+OLDIP=`curl --connect-timeout 3 http://ipinfo.io/ip`
 NEWIP=$OLDIP
 
 # check if we're conencted to the VPN
@@ -122,7 +122,7 @@ else
     NEWIP=$OLDIP
     VPNROUTE=`route -n | grep $VPNINTERFACE`
     if [ "$VPNROUTE" == "" ]; then
-      NEWIP=`wget -T 3 -t 3 http://ipinfo.io/ip -qO -`
+      NEWIP=`curl --connect-timeout 3 http://ipinfo.io/ip`
     fi
   done
   echo ""
@@ -146,7 +146,7 @@ do
   NEWIP=$OLDIP
   VPNROUTE=`route -n | grep $VPNINTERFACE`
   if [ "$VPNROUTE" != "" ]; then
-    NEWIP=`wget -T 3 -t 3 http://ipinfo.io/ip -qO -`
+    NEWIP=`curl --connect-timeout 3 http://ipinfo.io/ip`
   fi
 done
 
@@ -165,19 +165,19 @@ else
   echo Current server is $PARAM1.
   echo $PARAM1 > $CURRENTSERVERFILE
   echo New IPv4 is $NEWIP.
-  CITY=`wget -T 3 -t 3 http://ipinfo.io/city -qO -`
+  CITY=`curl --connect-timeout 3 http://ipinfo.io/city`
   if [ "$CITY" == "" ]; then
     CITY="an unknown city"
   fi
-  REGION=`wget -T 3 -t 3 http://ipinfo.io/region -qO -`
+  REGION=`curl --connect-timeout 3 http://ipinfo.io/region`
   if [ "$REGION" == "" ]; then
     REGION="region unknown"
   fi
-  ISP=`wget -T 3 -t 3 http://ipinfo.io/org -qO -`
+  ISP=`curl --connect-timeout 3 http://ipinfo.io/org`
   if [ "$ISP" == "" ]; then
     ISP="an unknown ISP"
   fi
-  COUNTRYCODE=`wget -T 3 -t 3 http://ipinfo.io/country -qO -`
+  COUNTRYCODE=`curl --connect-timeout 3 http://ipinfo.io/country`
   echo $COUNTRYCODE > $CURRENTCOUNTRYFILE
   if [ "$COUNTRYCODE" == "" ]; then
     COUNTRY="country unknown"
