@@ -15,7 +15,7 @@
 
 # minimum speed in Mbit/s you expect from the VPN connection
 # default: 2
-MINIMUMSPEED=.69
+MINIMUMSPEED=2
 
 # define VPN interface (see "route -n" when connected)
 # default: tun1
