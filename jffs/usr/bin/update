@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v1.02                                                #
+#   Update script v1.03                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -17,10 +17,10 @@
 URL=https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
 
 echo Updating checkcon script...
-curl -m 30 -#kLRS $URL/jffs/usr/bin/checkcon -o checkcon
+wget -t 3 -T 10 $URL/jffs/usr/bin/checkcon
 echo Updating speedcheck script...
-curl -m 30 -#kLRS $URL/jffs/usr/bin/speedcheck -o speedcheck
+wget -t 3 -T 10 $URL/jffs/usr/bin/speedcheck
 echo Updating vpn script...
-curl -m 30 -#kLRS $URL/jffs/usr/bin/vpn -o vpn
+wget -t 3 -T 10 $URL/jffs/usr/bin/vpn
 echo Updating update script...
-curl -m 30 -#kLRS $URL/jffs/usr/bin/update -o update
+wget -t 3 -T 10 $URL/jffs/usr/bin/update

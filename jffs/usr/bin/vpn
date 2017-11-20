@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v2.03                                         #
+#   VPN connector script v2.04                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -101,7 +101,7 @@ if [ "$PARAM1" == "rnd" ]; then
 fi
 
 # init
-OLDIP=`curl --connect-timeout 3 http://ipinfo.io/ip`
+OLDIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
 NEWIP=$OLDIP
 
 # check if we're conencted to the VPN
@@ -122,7 +122,7 @@ else
     NEWIP=$OLDIP
     VPNROUTE=`route -n | grep $VPNINTERFACE`
     if [ "$VPNROUTE" == "" ]; then
-      NEWIP=`curl --connect-timeout 3 http://ipinfo.io/ip`
+      NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
     fi
   done
   echo ""
@@ -146,7 +146,7 @@ do
   NEWIP=$OLDIP
   VPNROUTE=`route -n | grep $VPNINTERFACE`
   if [ "$VPNROUTE" != "" ]; then
-    NEWIP=`curl --connect-timeout 3 http://ipinfo.io/ip`
+    NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
   fi
 done
 
@@ -165,19 +165,19 @@ else
   echo Current server is $PARAM1.
   echo $PARAM1 > $CURRENTSERVERFILE
   echo New IPv4 is $NEWIP.
-  CITY=`curl --connect-timeout 3 http://ipinfo.io/city`
+  CITY=`wget -t 3 -T 10 -q -O - http://ipinfo.io/city`
   if [ "$CITY" == "" ]; then
     CITY="an unknown city"
   fi
-  REGION=`curl --connect-timeout 3 http://ipinfo.io/region`
+  REGION=`wget -t 3 -T 10 -q -O - http://ipinfo.io/region`
   if [ "$REGION" == "" ]; then
     REGION="region unknown"
   fi
-  ISP=`curl --connect-timeout 3 http://ipinfo.io/org`
+  ISP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/org`
   if [ "$ISP" == "" ]; then
     ISP="an unknown ISP"
   fi
-  COUNTRYCODE=`curl --connect-timeout 3 http://ipinfo.io/country`
+  COUNTRYCODE=`wget -t 3 -T 10 -q -O - http://ipinfo.io/country`
   echo $COUNTRYCODE > $CURRENTCOUNTRYFILE
   if [ "$COUNTRYCODE" == "" ]; then
     COUNTRY="country unknown"
