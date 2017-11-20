@@ -1,0 +1,26 @@
+#!/bin/sh
+
+########################################################################
+#                                                                      #
+#   Update script v1.02                                                #
+#   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
+#                                                                      #
+#   This script must be located on a USB stick and mounted on /jffs.   #
+#   All scripts must be "chmod ugo+x" in order to be executable.       #
+#   You might wanna call it by cron similar to that (mind "root" in    #
+#   the following line):                                               #
+#   0 3 * * * root /jffs/usr/bin/update 2>&1                           #
+#                                                                      #
+########################################################################
+
+# Master URL
+URL=https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
+
+echo Updating checkcon script...
+curl -m 30 -#kLRS $URL/jffs/usr/bin/checkcon -o checkcon
+echo Updating speedcheck script...
+curl -m 30 -#kLRS $URL/jffs/usr/bin/speedcheck -o speedcheck
+echo Updating vpn script...
+curl -m 30 -#kLRS $URL/jffs/usr/bin/vpn -o vpn
+echo Updating update script...
+curl -m 30 -#kLRS $URL/jffs/usr/bin/update -o update
