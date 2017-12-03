@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v2.04                                         #
+#   VPN connector script v2.05                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -46,6 +46,13 @@ SPEEDTESTSCRIPT=/jffs/usr/bin/speedcheck
 
 # configuration end. Hands off below this line please.
 
+
+# check if system supports curl command
+CURLSUPPORTED=yes
+RESULT=`command -v curl`
+if [ "$RESULT" == "" ]; then
+  CURLSUPPORTED=no
+fi
 
 # kill all speedcheck scripts
 killall -q speedcheck
@@ -165,19 +172,35 @@ else
   echo Current server is $PARAM1.
   echo $PARAM1 > $CURRENTSERVERFILE
   echo New IPv4 is $NEWIP.
-  CITY=`wget -t 3 -T 10 -q -O - http://ipinfo.io/city`
+  if [ "$CURLSUPPORTED" == "yes" ]; then
+    CITY=$(curl --connect-timeout 3 -ks https://ipinfo.io/city)
+  else
+    CITY=`wget -t 3 -T 10 -q -O - http://ipinfo.io/city`
+  fi
   if [ "$CITY" == "" ]; then
     CITY="an unknown city"
   fi
-  REGION=`wget -t 3 -T 10 -q -O - http://ipinfo.io/region`
+  if [ "$CURLSUPPORTED" == "yes" ]; then
+    REGION=$(curl --connect-timeout 3 -ks https://ipinfo.io/region)
+  else
+    REGION=`wget -t 3 -T 10 -q -O - http://ipinfo.io/region`
+  fi
   if [ "$REGION" == "" ]; then
     REGION="region unknown"
   fi
-  ISP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/org`
+  if [ "$CURLSUPPORTED" == "yes" ]; then
+    ISPN=$(curl --connect-timeout 3 -ks https://ipinfo.io/org)
+  else
+    ISP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/org`
+  fi
   if [ "$ISP" == "" ]; then
     ISP="an unknown ISP"
   fi
-  COUNTRYCODE=`wget -t 3 -T 10 -q -O - http://ipinfo.io/country`
+  if [ "$CURLSUPPORTED" == "yes" ]; then
+    COUNTRYCODE=$(curl --connect-timeout 3 -ks https://ipinfo.io/country)
+  else
+    COUNTRYCODE=`wget -t 3 -T 10 -q -O - http://ipinfo.io/country`
+  fi
   echo $COUNTRYCODE > $CURRENTCOUNTRYFILE
   if [ "$COUNTRYCODE" == "" ]; then
     COUNTRY="country unknown"
