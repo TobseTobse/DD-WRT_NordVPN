@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Serverconfig conversion script v2.02                               #
+#   Serverconfig conversion script v3.01                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script converts NordVPN OpenVPN files in the ovpn directory   #
@@ -16,21 +16,20 @@
 #                                                                      #
 ########################################################################
 
-// script may run 30 minutes maximum
-ini_set("max_execution_time", 1800);
+// script may run one hour maximum
+ini_set("max_execution_time", 3600);
 
-// determine current invocation (CLI or web server)
-$br = "\n";
-if (php_sapi_name() != "cli") {
-  $br = "<br />" . $br;
-}
-
-// get all 1194 ovpn files from https://nordvpn.com/ovpn
+// get all ovpn files from https://nordvpn.com/ovpn
 // and save them to the "ovpn" folder
 $nordvpnURL = "https://nordvpn.com/ovpn";
-$html = file_get_contents($nordvpnURL);
-echo "Got HTML from " . $nordvpnURL . $br;
-preg_match_all("%\"([^\"]*?udp1194)\"%sim", $html, $hits);
+out("Getting HTML from " . $nordvpnURL . "...");
+$html = @file_get_contents($nordvpnURL);
+if (trim ($html) == "") {
+  die ("Got no HTML. Please check internet connection.\n");
+}
+preg_match_all("%\"([^\"]*?udp1194\.ovpn)\"%sim", $html, $hits);
+out("Retrieved data for " . count($hits[1])
+   . " VPN servers from " . $nordvpnURL);
 if (!file_exists("ovpn")) mkdir("ovpn");
 foreach ($hits[1] as $hit) {
   $url = $hit;
@@ -47,7 +46,7 @@ foreach ($hits[1] as $hit) {
 
   // download ovpn file
   file_put_contents("ovpn/" . $filename, file_get_contents($url));
-  echo "Got file " . $filename . $br;
+  out("Got server config " . $filename);
 }
 
 // create "serverconfigs" directory
@@ -55,11 +54,12 @@ if (!file_exists("serverconfigs")) mkdir ("serverconfigs");
 
 // get all files from ovpn directory
 $files = scandir("ovpn");
+natsort($files);
 
 foreach ($files as $filename) {
 
   // skip files not ending on ".nordvpn.com.udp1194.ovpn"
-  if (!preg_match("%\.nordvpn\.com\.udp1194$%", $filename)) {
+  if (!preg_match("%\.nordvpn\.com\.udp1194\.ovpn$%", $filename)) {
     continue;
   }
 
@@ -67,7 +67,7 @@ foreach ($files as $filename) {
   $file = file_get_contents("ovpn/" . $filename);
 
   // extract "ch1" or "lv-tor1" shortcut from filename
-  $sc = preg_replace("%\.nordvpn\.com\.udp1194$%", "", $filename);
+  $sc = preg_replace("%\.nordvpn\.com\.udp1194.ovpn$%", "", $filename);
   
   // well-form shortcut ("hk7" => "hk007")
   preg_match("%^([a-z]+?)(\d+)%i", $sc, $scParts);
@@ -126,9 +126,28 @@ foreach ($files as $filename) {
         . "passtos";
 
   // write remaining rest of ovpn to target file
-  file_put_contents($sc . "/openvpn.conf", $file);
-  echo "Wrote config for server "
-     . str_replace("serverconfigs/", "", $sc) . "." . $br;
+  file_put_contents($sc . "/openvpn.conf", trim($file));
+  out("Wrote config for server "
+     . str_replace("serverconfigs/", "", $sc) . ".");
 }
 
-echo "Job's done." . $br;
+out("Job's done.");
+
+// display output
+function dummyErrorHandler ($errno, $errstr, $errfile, $errline) {}
+function out($text) {
+
+  // determine current invocation (CLI or web server)
+  $br = "\n";
+  if (php_sapi_name() != "cli") {
+    $br = "<br />" . $br;
+  }
+
+  echo $text . $br;
+  ob_start();
+  ob_end_clean();
+  flush();
+  set_error_handler("dummyErrorHandler");
+  ob_end_flush();
+  restore_error_handler();
+}
