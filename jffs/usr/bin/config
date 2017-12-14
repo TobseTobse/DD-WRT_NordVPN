@@ -1,0 +1,117 @@
+#!/bin/sh
+
+########################################################################
+##                                                                    ##
+## vpn                                                                ##
+##                                                                    ##
+########################################################################
+
+# define VPN interface (see "route -n" when connected)
+# default: tun1
+VPNINTERFACE=tun1
+
+# directory containing the prepared VPN configuration files
+# default: /jffs/serverconfigs
+CONFIGFILESDIR=/jffs/serverconfigs
+
+# path to file containing the name of the current server
+# default: /jffs/currentserver
+CURRENTSERVERFILE=/jffs/currentserver
+
+# path to file containing the name of the current country
+# default: /jffs/currentcountry
+CURRENTCOUNTRYFILE=/jffs/currentcountry
+
+# path to countries JSON
+# default: /jffs/
+JFFSPATH=/jffs/
+
+# name of JSON file with countries shortcuts
+# default: countries.json
+COUNTRIESJSON=countries.json
+
+# path to speed test script
+# default: /jffs/usr/bin/speedcheck
+SPEEDTESTSCRIPT=/jffs/usr/bin/speedcheck
+
+# path to openVPN log file
+VPNLOG=/tmp/openvpncl/openvpn.log
+
+# exit node connection timeout in seconds (approximate)
+# default: 10
+CONNECTIONTIMEOUT=10
+
+# timeout in approximate seconds to wait
+# for old VPN connection to drop
+# default: 59
+DROPTIMEOUT=59
+
+# maximum connection retries before reboot
+# default: 10
+MAXTRIES=10
+
+
+########################################################################
+##                                                                    ##
+## speedcheck                                                         ##
+##                                                                    ##
+########################################################################
+
+# minimum speed in Mbit/s you expect from the VPN connection
+# default: 2
+MINIMUMSPEED=2
+
+# path to VPN script
+# default: /jffs/usr/bin/vpn
+VPNSCRIPT=/jffs/usr/bin/vpn
+
+# path to connection check script
+# default: /jffs/usr/bin/checkcon
+CCSCRIPT=/jffs/usr/bin/checkcon
+
+# path to file containing the name of the current server
+# default: /jffs/currentserver
+CURRENTSERVERFILE=/jffs/currentserver
+
+# path to file containing the name of the current country
+# default: /jffs/currentcountry
+CURRENTCOUNTRYFILE=/jffs/currentcountry
+
+# directory containing the prepared VPN configuration files
+# default: /jffs/serverconfigs
+CONFIGFILESDIR=/jffs/serverconfigs
+
+# log server speeds equal or higher than minimum speed to this file
+# default: /jffs/servers.good.log
+GOODLOGFILE=/jffs/servers.good.log
+
+# log server speeds lower than minimum speed to this file
+# default: /jffs/servers.bad.log
+BADLOGFILE=/jffs/servers.bad.log
+
+# path to speedtest server XML
+# default: speedtestservers.xml
+XMLFILE=speedtestservers.xml
+
+# update server XML once in at least that many minutes
+# default: 180
+XMLUPDATEMINUTES=180
+
+
+########################################################################
+##                                                                    ##
+## checkcon                                                           ##
+##                                                                    ##
+########################################################################
+
+# server name to ping (please use a server name, not an IP here)
+# default: wikipedia.org
+PINGSERVER=wikipedia.org
+
+# amount of pings to test
+# default: 10
+PINGTRIES=10
+
+# maximum amount of failed pings during test
+# default: 5
+MAXFAILS=5

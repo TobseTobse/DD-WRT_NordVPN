@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Connection check script v2.03                                      #
+#   Connection check script v2.05                                      #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -11,24 +11,9 @@
 #                                                                      #
 ########################################################################
 
-# server name to ping (please use a server name, not an IP here)
-# default: wikipedia.org
-PINGSERVER=wikipedia.org
-
-# path to VPN script
-# default: /jffs/usr/bin/vpn
-VPNSCRIPT=/jffs/usr/bin/vpn
-
-# amount of pings to test
-# default: 20
-PINGTRIES=20
-
-# maximum amount of failed pings during test
-# default: 10
-MAXFAILS=10
-
-# configuration end. Hands off below this line please.
-
+# load config
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+source $DIRNAME/config
 
 # repeatedly ping specified domain
 PINGFAILS=0

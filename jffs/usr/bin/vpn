@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v2.05                                         #
+#   VPN connector script v3.01                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -16,36 +16,9 @@
 #                                                                      #
 ########################################################################
 
-# define VPN interface (see "route -n" when connected)
-# default: tun1
-VPNINTERFACE=tun1
-
-# directory containing the prepared VPN configuration files
-# default: /jffs/serverconfigs
-CONFIGFILESDIR=/jffs/serverconfigs
-
-# path to file containing the name of the current server
-# default: /jffs/currentserver
-CURRENTSERVERFILE=/jffs/currentserver
-
-# path to file containing the name of the current country
-# default: /jffs/currentcountry
-CURRENTCOUNTRYFILE=/jffs/currentcountry
-
-# path to countries JSON
-# default: /jffs/
-JFFSPATH=/jffs/
-
-# name of JSON file with countries shortcuts
-# default: countries.json
-COUNTRIESJSON=countries.json
-
-# path to speed test script
-# default: /jffs/usr/bin/speedcheck
-SPEEDTESTSCRIPT=/jffs/usr/bin/speedcheck
-
-# configuration end. Hands off below this line please.
-
+# load config
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+source $DIRNAME/config
 
 # check if system supports curl command
 CURLSUPPORTED=yes
@@ -76,142 +49,170 @@ if [ "$PARAM1" != "rnd" ]; then
   fi
 fi
 
-# if parameter 1 is "rnd" user wants a random server
-# read server configuration directories
-if [ "$PARAM1" == "rnd" ]; then
-  SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
+RETRIESDONE=0
+while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
+  # if parameter 1 is "rnd" user wants a random server
+  # read server configuration directories
+  if [ "$1" == "rnd" ]; then
+    SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
 
-  # count amount of directories
-  AMT=0
-  for SERVERDIR in $SERVERDIRS ; do
-    if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
-      let AMT=$AMT+1
-    fi
-  done
+    # count amount of directories
+    AMT=0
+    for SERVERDIR in $SERVERDIRS ; do
+      if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
+        let AMT=$AMT+1
+      fi
+    done
 
-  # generate random number
-  # between 1 and amount of server directories
-  RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+    # generate random number
+    # between 1 and amount of server directories
+    RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
 
-  # now pick #$RND from list
-  CNT=0
-  for SERVERDIR in $SERVERDIRS ; do
-    if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
+    # now pick #$RND from list
+    CNT=0
+    for SERVERDIR in $SERVERDIRS ; do
+      if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
+        let CNT=$CNT+1
+      fi
+      if [ $CNT -eq $RND ]; then
+        SERVER=`echo $SERVERDIR | sed "s|$CONFIGFILESDIR/||g"`
+        PARAM1=$SERVER
+      fi
+    done
+  fi
+
+  # init
+  let TRYNUMBER=$RETRIESDONE+1
+  echo This is try \#$TRYNUMBER of $MAXTRIES.
+  echo Connecting to server $PARAM1.
+  OLDIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
+  NEWIP=$OLDIP
+
+  # check if we're connected to the VPN
+  VPNROUTE=`route -n | grep $VPNINTERFACE`
+  if [ "$VPNROUTE" == "" ]; then
+    echo We\'re not connected to the VPN.
+  else
+    # drop the VPN
+    echo Current IPv4 is $OLDIP
+    CNT=0
+    killall openvpn
+    printf "Waiting for the VPN to drop."
+    while [ $CNT -le $DROPTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
+    do
+      sleep 1
       let CNT=$CNT+1
-    fi
-    if [ $CNT -eq $RND ]; then
-      SERVER=`echo $SERVERDIR | sed "s|$CONFIGFILESDIR/||g"`
-      echo Connecting to server $SERVER.
-      PARAM1=$SERVER
-    fi
-  done
-fi
+      printf "."
+      NEWIP=$OLDIP
+      VPNROUTE=`route -n | grep $VPNINTERFACE`
+      if [ "$VPNROUTE" == "" ]; then
+        NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
+      fi
+    done
+    echo ""
+  fi
+  echo Current IPv4 is $NEWIP.
 
-# init
-OLDIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
-NEWIP=$OLDIP
+  # copy given server files and restart the VPN
+  cp $CONFIGFILESDIR/$PARAM1/* /tmp/openvpncl/
+  chmod og-r /tmp/openvpncl/*
+  OPENVPNLOG_OLD=
+  LASTLOGLINE=`tail -n1 $VPNLOG`
+  openvpn --config /tmp/openvpncl/openvpn.conf --route-up /tmp/openvpncl/route-up.sh --log $VPNLOG --daemon
 
-# check if we're conencted to the VPN
-VPNROUTE=`route -n | grep $VPNINTERFACE`
-if [ "$VPNROUTE" == "" ]; then
-  echo We\'re not connected to the VPN.
-else
-  # drop the VPN
-  echo Current IPv4 is $OLDIP
+  # wait for new IPv4
+  OLDIP=$NEWIP
   CNT=0
-  killall openvpn
-  printf "Waiting for the VPN to drop."
-  while [ $CNT -le 59 ] && [ "$NEWIP" == "$OLDIP" ]
+  SLEEP=1
+  echo "Waiting for the VPN to come up:"
+  echo ""
+  while [ $CNT -le $CONNECTIONTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
   do
-    sleep 1
+    sleep $SLEEP
     let CNT=$CNT+1
-    printf "."
+    OPENVPNLOG_NEW=`cat $VPNLOG`
+    if [ "$OPENVPNLOG_NEW" != "$OPENVPNLOG_OLD" ]; then
+      FOUNDLINE="no"
+      while read LINE; do
+        if [ "$LINE" == "$LASTLOGLINE" ]; then
+          FOUNDLINE="yes"
+        fi
+        if [ "$FOUNDLINE" == "yes" ] && [ "$LINE" != "$LASTLOGLINE" ]; then
+          echo $LINE
+        fi
+      done < $VPNLOG
+      if [ "$FOUNDLINE" == "no" ]; then
+        echo "${OPENVPNLOG_NEW}"
+      fi
+    fi
+    OPENVPNLOG_OLD=$OPENVPNLOG_NEW
+    LASTLOGLINE=`tail -n1 $VPNLOG`
     NEWIP=$OLDIP
     VPNROUTE=`route -n | grep $VPNINTERFACE`
-    if [ "$VPNROUTE" == "" ]; then
+    if [ "$VPNROUTE" != "" ]; then
       NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
     fi
   done
+
+  # echo new IPv4, city and country
   echo ""
-fi
-echo Current IPv4 is $NEWIP.
-
-# copy given server files and restart the VPN
-cp $CONFIGFILESDIR/$PARAM1/* /tmp/openvpncl/
-openvpn --config /tmp/openvpncl/openvpn.conf --route-up /tmp/openvpncl/route-up.sh --log /tmp/openvpncl/openvpn.log --daemon
-
-# wait for new IPv4
-OLDIP=$NEWIP
-CNT=0
-SLEEP=1
-printf "Waiting for the VPN to come up."
-while [ $CNT -le 29 ] && [ "$NEWIP" == "$OLDIP" ]
-do
-  sleep $SLEEP
-  let CNT=$CNT+1
-  printf "."
-  NEWIP=$OLDIP
-  VPNROUTE=`route -n | grep $VPNINTERFACE`
-  if [ "$VPNROUTE" != "" ]; then
-    NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
+  if [ "$NEWIP" == "$OLDIP" ]; then
+    echo IPv4 hasn\'t changed.
+    VPNROUTE=`route -n | grep $VPNINTERFACE`
+    if [ "$VPNROUTE" == "" ]; then
+      echo "Houston, we have a problem. Connecting to exit node $PARAM1 has failed."
+      echo
+      echo
+    fi
+  else
+    echo Current server is $PARAM1.
+    echo $PARAM1 > $CURRENTSERVERFILE
+    echo New IPv4 is $NEWIP.
+    if [ "$CURLSUPPORTED" == "yes" ]; then
+      CITY=$(curl --connect-timeout 3 -ks https://ipinfo.io/city)
+    else
+      CITY=`wget -t 3 -T 10 -q -O - http://ipinfo.io/city`
+    fi
+    if [ "$CITY" == "" ]; then
+      CITY="an unknown city"
+    fi
+    if [ "$CURLSUPPORTED" == "yes" ]; then
+      REGION=$(curl --connect-timeout 3 -ks https://ipinfo.io/region)
+    else
+      REGION=`wget -t 3 -T 10 -q -O - http://ipinfo.io/region`
+    fi
+    if [ "$REGION" == "" ]; then
+      REGION="region unknown"
+    fi
+    if [ "$CURLSUPPORTED" == "yes" ]; then
+      ISPN=$(curl --connect-timeout 3 -ks https://ipinfo.io/org)
+    else
+      ISP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/org`
+    fi
+    if [ "$ISP" == "" ]; then
+      ISP="an unknown ISP"
+    fi
+    if [ "$CURLSUPPORTED" == "yes" ]; then
+      COUNTRYCODE=$(curl --connect-timeout 3 -ks https://ipinfo.io/country)
+    else
+      COUNTRYCODE=`wget -t 3 -T 10 -q -O - http://ipinfo.io/country`
+    fi
+    echo $COUNTRYCODE > $CURRENTCOUNTRYFILE
+    if [ "$COUNTRYCODE" == "" ]; then
+      COUNTRY="country unknown"
+    else
+      if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ]; then
+        wget -q http://country.io/names.json -P $JFFSPATH -O $COUNTRIESJSON
+      fi
+      COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | grep -E -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | grep -E -o '[^\"]{3,}'`
+    fi
+    echo New geolocation is $CITY, region $REGION, $COUNTRY.
+    echo Our end service provider is $ISP.
+    RETRIESDONE=$MAXTRIES
+    $SPEEDTESTSCRIPT
   fi
+  let RETRIESDONE=$RETRIESDONE+1
 done
 
-# echo new IPv4, city and country
-echo ""
-if [ "$NEWIP" == "$OLDIP" ]; then
-  echo IPv4 hasn\'t changed.
-  VPNROUTE=`route -n | grep $VPNINTERFACE`
-  if [ "$VPNROUTE" == "" ]; then
-    echo Houston, we have a problem. We\'re not connected to the VPN.
-    echo Rebooting router.
-    reboot
-    exit 1
-  fi
-else
-  echo Current server is $PARAM1.
-  echo $PARAM1 > $CURRENTSERVERFILE
-  echo New IPv4 is $NEWIP.
-  if [ "$CURLSUPPORTED" == "yes" ]; then
-    CITY=$(curl --connect-timeout 3 -ks https://ipinfo.io/city)
-  else
-    CITY=`wget -t 3 -T 10 -q -O - http://ipinfo.io/city`
-  fi
-  if [ "$CITY" == "" ]; then
-    CITY="an unknown city"
-  fi
-  if [ "$CURLSUPPORTED" == "yes" ]; then
-    REGION=$(curl --connect-timeout 3 -ks https://ipinfo.io/region)
-  else
-    REGION=`wget -t 3 -T 10 -q -O - http://ipinfo.io/region`
-  fi
-  if [ "$REGION" == "" ]; then
-    REGION="region unknown"
-  fi
-  if [ "$CURLSUPPORTED" == "yes" ]; then
-    ISPN=$(curl --connect-timeout 3 -ks https://ipinfo.io/org)
-  else
-    ISP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/org`
-  fi
-  if [ "$ISP" == "" ]; then
-    ISP="an unknown ISP"
-  fi
-  if [ "$CURLSUPPORTED" == "yes" ]; then
-    COUNTRYCODE=$(curl --connect-timeout 3 -ks https://ipinfo.io/country)
-  else
-    COUNTRYCODE=`wget -t 3 -T 10 -q -O - http://ipinfo.io/country`
-  fi
-  echo $COUNTRYCODE > $CURRENTCOUNTRYFILE
-  if [ "$COUNTRYCODE" == "" ]; then
-    COUNTRY="country unknown"
-  else
-    if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ]; then
-      wget -q http://country.io/names.json -P $JFFSPATH -O $COUNTRIESJSON
-    fi
-    COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | grep -E -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | grep -E -o '[^\"]{3,}'`
-  fi
-  echo New geolocation is $CITY, region $REGION, $COUNTRY.
-  echo Our end service provider is $ISP.
-fi
-
-$SPEEDTESTSCRIPT
+echo Rebooting router.
+reboot

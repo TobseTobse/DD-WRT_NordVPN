@@ -17,10 +17,10 @@
 URL=https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
 
 echo Updating checkcon script...
-wget -t 3 -T 10 $URL/jffs/usr/bin/checkcon
+wget -t 3 -T 10 $URL/jffs/usr/bin/checkcon -o checkcon
 echo Updating speedcheck script...
-wget -t 3 -T 10 $URL/jffs/usr/bin/speedcheck
+wget -t 3 -T 10 $URL/jffs/usr/bin/speedcheck -o speedcheck
 echo Updating vpn script...
-wget -t 3 -T 10 $URL/jffs/usr/bin/vpn
+wget -t 3 -T 10 $URL/jffs/usr/bin/vpn -o vpn
 echo Updating update script...
-wget -t 3 -T 10 $URL/jffs/usr/bin/update
+wget -t 3 -T 10 $URL/jffs/usr/bin/update -o update

@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v1.09                                       #
+#   VPN speed check script v1.10                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -13,52 +13,9 @@
 #                                                                      #
 ########################################################################
 
-# minimum speed in Mbit/s you expect from the VPN connection
-# default: 2
-MINIMUMSPEED=2
-
-# define VPN interface (see "route -n" when connected)
-# default: tun1
-VPNINTERFACE=tun1
-
-# path to VPN script
-# default: /jffs/usr/bin/vpn
-VPNSCRIPT=/jffs/usr/bin/vpn
-
-# path to connection check script
-# default: /jffs/usr/bin/checkcon
-CCSCRIPT=/jffs/usr/bin/checkcon
-
-# path to file containing the name of the current server
-# default: /jffs/currentserver
-CURRENTSERVERFILE=/jffs/currentserver
-
-# path to file containing the name of the current country
-# default: /jffs/currentcountry
-CURRENTCOUNTRYFILE=/jffs/currentcountry
-
-# directory containing the prepared VPN configuration files
-# default: /jffs/serverconfigs
-CONFIGFILESDIR=/jffs/serverconfigs
-
-# log server speeds equal or higher than minimum speed to this file
-# default: /jffs/servers.good.log
-GOODLOGFILE=/jffs/servers.good.log
-
-# log server speeds lower than minimum speed to this file
-# default: /jffs/servers.bad.log
-BADLOGFILE=/jffs/servers.bad.log
-
-# path to speedtest server XML
-# default: /jffs/speedtestservers.xml
-XMLFILE=/jffs/speedtestservers.xml
-
-# update server XML once in at least that many minutes
-# default: 180
-XMLUPDATEMINUTES=180
-
-# configuration end. Hands off below this line please.
-
+# load config
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+source $DIRNAME/config
 
 # kill all vpn connection scripts
 killall -q vpn
