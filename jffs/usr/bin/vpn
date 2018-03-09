@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v3.01                                         #
+#   VPN connector script v3.02                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -210,6 +210,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     echo Our end service provider is $ISP.
     RETRIESDONE=$MAXTRIES
     $SPEEDTESTSCRIPT
+    exit
   fi
   let RETRIESDONE=$RETRIESDONE+1
 done
