@@ -51,6 +51,7 @@ fi
 
 RETRIESDONE=0
 while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
+
   # if parameter 1 is "rnd" user wants a random server
   # read server configuration directories
   if [ "$1" == "rnd" ]; then
@@ -64,20 +65,37 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       fi
     done
 
-    # generate random number
-    # between 1 and amount of server directories
-    RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+    # loop as long as server is in excluded list
+    EXCLUDECOUNTRIES=$(echo $IGNORECOUNTRIES | tr "," "\n")
+    while : ; do
 
-    # now pick #$RND from list
-    CNT=0
-    for SERVERDIR in $SERVERDIRS ; do
-      if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
-        let CNT=$CNT+1
-      fi
-      if [ $CNT -eq $RND ]; then
-        SERVER=`echo $SERVERDIR | sed "s|$CONFIGFILESDIR/||g"`
-        PARAM1=$SERVER
-      fi
+      # generate random number
+      # between 1 and amount of server directories
+      RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+
+      # now pick $RND from list
+      CNT=0
+      for SERVERDIR in $SERVERDIRS ; do
+        if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
+          let CNT=$CNT+1
+        fi
+        if [ $CNT -eq $RND ]; then
+          SERVER=`echo $SERVERDIR | sed "s|$CONFIGFILESDIR/||g"`
+          PARAM1=$SERVER
+        fi
+      done
+
+      # check if selected server is in a to be excluded country
+      WRONGCOUNTRY=no
+      for i in $EXCLUDECOUNTRIES
+      do
+        if [ -z "${PARAM1##*$i*}" ]; then
+          WRONGCOUNTRY=yes
+          break
+        fi
+      done
+
+      [[ "$WRONGCOUNTRY" == "yes" ]] || break
     done
   fi
 

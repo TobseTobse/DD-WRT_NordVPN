@@ -1,8 +1,18 @@
 #!/bin/sh
 
 ########################################################################
+#                                                                      #
+#   VPN config script                                                  #
+#   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
+#                                                                      #
+#   This script must be located in the same folder as the vpn,         #
+#   speedcheck and checkcon scripts.                                   #
+#                                                                      #
+########################################################################
+
+########################################################################
 ##                                                                    ##
-## vpn                                                                ##
+## vpn script config                                                  ##
 ##                                                                    ##
 ########################################################################
 
@@ -50,10 +60,15 @@ DROPTIMEOUT=59
 # default: 10
 MAXTRIES=10
 
+# countries to ignore when connection to a random exit node,
+# separated by comma (e.g. countries known for mass surveillance)
+# default: "at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
+IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
+
 
 ########################################################################
 ##                                                                    ##
-## speedcheck                                                         ##
+## speedcheck script config                                           ##
 ##                                                                    ##
 ########################################################################
 
@@ -100,7 +115,7 @@ XMLUPDATEMINUTES=180
 
 ########################################################################
 ##                                                                    ##
-## checkcon                                                           ##
+## checkcon script config                                             ##
 ##                                                                    ##
 ########################################################################
 
