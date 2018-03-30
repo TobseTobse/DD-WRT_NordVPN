@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v3.02                                         #
+#   VPN connector script v3.03                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -117,7 +117,10 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   cp $CONFIGFILESDIR/$PARAM1/* /tmp/openvpncl/
   chmod og-r /tmp/openvpncl/*
   OPENVPNLOG_OLD=
-  LASTLOGLINE=`tail -n1 $VPNLOG`
+  LASTLOGLINE=
+  if [ -f $VPNLOG ]; then
+    LASTLOGLINE=`tail -n1 $VPNLOG`
+  fi
   openvpn --config /tmp/openvpncl/openvpn.conf --route-up /tmp/openvpncl/route-up.sh --log $VPNLOG --daemon
 
   # wait for new IPv4
@@ -130,27 +133,30 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   do
     sleep $SLEEP
     let CNT=$CNT+1
-    OPENVPNLOG_NEW=`cat $VPNLOG`
-    if [ "$OPENVPNLOG_NEW" != "$OPENVPNLOG_OLD" ]; then
-      FOUNDLINE="no"
-      while read LINE; do
-        if [ "$LINE" == "$LASTLOGLINE" ]; then
-          FOUNDLINE="yes"
+    OPENVPNLOG_NEW=
+    if [ -f $VPNLOG ]; then
+      OPENVPNLOG_NEW=`cat $VPNLOG`
+      if [ "$OPENVPNLOG_NEW" != "$OPENVPNLOG_OLD" ]; then
+        FOUNDLINE="no"
+        while read LINE; do
+          if [ "$LINE" == "$LASTLOGLINE" ]; then
+            FOUNDLINE="yes"
+          fi
+          if [ "$FOUNDLINE" == "yes" ] && [ "$LINE" != "$LASTLOGLINE" ]; then
+            echo $LINE
+          fi
+        done < $VPNLOG
+        if [ "$FOUNDLINE" == "no" ]; then
+          echo "${OPENVPNLOG_NEW}"
         fi
-        if [ "$FOUNDLINE" == "yes" ] && [ "$LINE" != "$LASTLOGLINE" ]; then
-          echo $LINE
-        fi
-      done < $VPNLOG
-      if [ "$FOUNDLINE" == "no" ]; then
-        echo "${OPENVPNLOG_NEW}"
       fi
-    fi
-    OPENVPNLOG_OLD=$OPENVPNLOG_NEW
-    LASTLOGLINE=`tail -n1 $VPNLOG`
-    NEWIP=$OLDIP
-    VPNROUTE=`route -n | grep $VPNINTERFACE`
-    if [ "$VPNROUTE" != "" ]; then
-      NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
+      OPENVPNLOG_OLD=$OPENVPNLOG_NEW
+      LASTLOGLINE=`tail -n1 $VPNLOG`
+      NEWIP=$OLDIP
+      VPNROUTE=`route -n | grep $VPNINTERFACE`
+      if [ "$VPNROUTE" != "" ]; then
+        NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
+      fi
     fi
   done
 
