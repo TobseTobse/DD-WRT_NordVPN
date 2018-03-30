@@ -35,7 +35,7 @@ PARAM1="$1"
 
 # check for empty parameter 1
 if [ "$PARAM1" == "" ]; then
-  echo Please a server directory as parameter from the following list:
+  echo Please use a server directory as parameter from the following list:
   ls $CONFIGFILESDIR
   echo If you\'re not sure which one to pick, just use "rnd" to pick a random server
   exit 1
