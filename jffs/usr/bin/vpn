@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v3.03                                         #
+#   VPN connector script v3.04                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -49,13 +49,16 @@ if [ "$PARAM1" != "rnd" ]; then
   fi
 fi
 
+echo "Reading servers list."
+SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
+echo
+
 RETRIESDONE=0
 while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
 
   # if parameter 1 is "rnd" user wants a random server
   # read server configuration directories
   if [ "$1" == "rnd" ]; then
-    SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
 
     # count amount of directories
     AMT=0
@@ -127,7 +130,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
         NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
       fi
     done
-    echo ""
+    echo
   fi
   echo Current IPv4 is $NEWIP.
 
@@ -146,7 +149,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   CNT=0
   SLEEP=1
   echo "Waiting for the VPN to come up:"
-  echo ""
+  echo
   while [ $CNT -le $CONNECTIONTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
   do
     sleep $SLEEP
@@ -179,11 +182,15 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   done
 
   # echo new IPv4, city and country
-  echo ""
+  echo
   if [ "$NEWIP" == "$OLDIP" ]; then
     echo IPv4 hasn\'t changed.
     VPNROUTE=`route -n | grep $VPNINTERFACE`
     if [ "$VPNROUTE" == "" ]; then
+
+      # log dead server
+      NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
+      echo $NOWSTAMP $PARAM1 >> $DEADLOGFILE
       echo "Houston, we have a problem. Connecting to exit node $PARAM1 has failed."
       echo
       echo

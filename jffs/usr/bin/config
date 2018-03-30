@@ -65,6 +65,10 @@ MAXTRIES=10
 # default: "at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 
+# log servers which couldn't be connected to
+# default: /jffs/servers.dead.log
+DEADLOGFILE=/jffs/servers.dead.log
+
 
 ########################################################################
 ##                                                                    ##
