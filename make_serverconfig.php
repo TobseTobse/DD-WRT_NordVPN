@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Serverconfig conversion script v3.02                               #
+#   Serverconfig conversion script v3.03                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script converts NordVPN OpenVPN files in the ovpn directory   #
@@ -66,10 +66,10 @@ foreach ($files as $filename) {
   // extract "ch1" or "lv-tor1" shortcut from filename
   $sc = preg_replace("%\.nordvpn\.com\.udp1194.ovpn$%", "", $filename);
   
-  // well-form shortcut ("hk7" => "hk007")
+  // well-form shortcut ("hk7" => "hk0007")
   preg_match("%^([a-z]+?)(\d+)%i", $sc, $scParts);
   if (is_array($scParts) && count($scParts) == 3) {
-    $sc = $scParts[1] . sprintf("%03d", $scParts[2]);
+    $sc = $scParts[1] . sprintf("%04d", $scParts[2]);
   }
   $sc = "serverconfigs/" . $sc;
 
