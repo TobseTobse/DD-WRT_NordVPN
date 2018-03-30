@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v3.04                                         #
+#   VPN connector script v3.05                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -49,9 +49,12 @@ if [ "$PARAM1" != "rnd" ]; then
   fi
 fi
 
-echo "Reading servers list."
-SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
-echo
+# read servers list outside of loop
+if [ "$1" == "rnd" ]; then
+  echo "Reading servers list."
+  SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
+  echo
+fi
 
 RETRIESDONE=0
 while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
