@@ -2,13 +2,12 @@
 
 ########################################################################
 #                                                                      #
-#   Serverconfig conversion script v3.03                               #
+#   Serverconfig conversion script v4.01                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script converts NordVPN OpenVPN files in the ovpn directory   #
-#   ending on ".nordvpn.com.udp1194.ovpn" to a format the DD-WRT       #
-#   scripts from https://tobsetobse.github.io/DD-WRT_NordVPN can       #
-#   work with.                                                         #
+#   ending on ".nordvpn.com.*.ovpn" to a format the DD-WRT scripts     #
+#   from https://tobsetobse.github.io/DD-WRT_NordVPN can work with.    #
 #                                                                      #
 #   The script is meant to be called from the CLI with the command     #
 #                                                                      #
@@ -19,6 +18,9 @@
 // script may run one hour maximum
 ini_set("max_execution_time", 3600);
 
+// regular expression server configs must match to be parsed
+$fileMatchPattern = "%^[a-z-]{2,5}\d+?\.(?:udp|tcp)(\d+?)\.ovpn$%i";
+
 // get all ovpn files from https://nordvpn.com/ovpn
 // and save them to the "ovpn" folder
 $nordvpnURL = "https://nordvpn.com/ovpn";
@@ -27,23 +29,27 @@ $html = @file_get_contents($nordvpnURL);
 if (trim ($html) == "") {
   die ("Got no HTML. Please check internet connection.\n");
 }
-preg_match_all("%\"([^\"]*?udp1194\.ovpn)\"%sim", $html, $hits);
+preg_match_all("%\"([^\"]*?)(?:udp|tcp)(\d+)\.ovpn\"%sim", $html, $hits);
 out("Retrieved data for " . count($hits[1])
    . " VPN servers from " . $nordvpnURL);
+out("");
 if (!file_exists("ovpn")) mkdir("ovpn");
-foreach ($hits[1] as $hit) {
-  $url = $hit;
-  if (!preg_match("%^https?://%i", $hit)) {
-    $url = $nordvpnURL . "/" . $hit;
-  }
-  $hitParts = explode("/", $hit);
-  $filename = $hitParts[count($hitParts) - 1];
-  if (!preg_match("%^[a-z]{2}\d+\.%i", $filename)
+$hits = $hits[0];
+natcasesort($hits);
+$cnt = 0;
+foreach ($hits as $hit) {
+  $cnt++;
+  $url = str_replace('"', "", $hit);
+  $hitParts = explode("/", $url);
+  $filename = preg_replace("%\.nordvpn\.com%", "",
+                           $hitParts[count($hitParts) - 1]);
+  if (!preg_match($fileMatchPattern, $filename)
    || file_exists("ovpn/" . $filename)) continue;
 
   // download ovpn file
   file_put_contents("ovpn/" . $filename, file_get_contents($url));
-  out("Got server config " . $filename);
+  out("Downloaded server config " . $filename . " ("
+    . sprintf("%0.2f", 100/count($hits)*$cnt) . "%).");
 }
 
 // create "serverconfigs" directory
@@ -51,12 +57,16 @@ if (!file_exists("serverconfigs")) mkdir ("serverconfigs");
 
 // get all files from ovpn directory
 $files = scandir("ovpn");
-natsort($files);
+natcasesort($files);
+out("");
 
+$cnt = 0;
+$scDirs = array();
 foreach ($files as $filename) {
+  $cnt++;
 
-  // skip files not ending on ".nordvpn.com.udp1194.ovpn"
-  if (!preg_match("%\.nordvpn\.com\.udp1194\.ovpn$%", $filename)) {
+  // skip files not ending on ".ovpn"
+  if (!preg_match($fileMatchPattern, $filename)) {
     continue;
   }
 
@@ -64,15 +74,18 @@ foreach ($files as $filename) {
   $file = file_get_contents("ovpn/" . $filename);
 
   // extract "ch1" or "lv-tor1" shortcut from filename
-  $sc = preg_replace("%\.nordvpn\.com\.udp1194.ovpn$%", "", $filename);
+  $fnParts = explode(".", $filename);
+  $sc = $fnParts[0] . "." . $fnParts[1];
   
   // well-form shortcut ("hk7" => "hk0007")
-  preg_match("%^([a-z]+?)(\d+)%i", $sc, $scParts);
-  if (is_array($scParts) && count($scParts) == 3) {
-    $sc = $scParts[1] . sprintf("%04d", $scParts[2]);
+  preg_match("%^([a-z-]+?)(\d+)\.(tcp|udp)%i", $sc, $scParts);
+  if (is_array($scParts) && count($scParts) == 4) {
+    $sc = str_replace("-", "", $scParts[1])
+        . sprintf("%04d", $scParts[2]) . $scParts[3];
   }
   $sc = "serverconfigs/" . $sc;
-
+  $scDirs[] = $sc;
+  
   // create directory for VPN node
   if (!file_exists($sc)) {
     mkdir($sc);
@@ -80,6 +93,7 @@ foreach ($files as $filename) {
 
   // extract ca-certificate from ovpn file
   preg_match("%<ca>(.+?)</ca>%sm", $file, $hits);
+  if (!isset($hits[1])) continue;
   $ca = trim($hits[1]);
   
   // write ca-certificate to target file
@@ -87,6 +101,7 @@ foreach ($files as $filename) {
 
   // extract tls-key from ovpn file
   preg_match("%<tls-auth>(.+?)</tls-auth>%sm", $file, $hits);
+  if (!isset($hits[1])) continue;
   $tls = trim($hits[1]);
   
   // write tls-key to target file
@@ -102,8 +117,7 @@ foreach ($files as $filename) {
   $lines = preg_split("%[\r\n]%", $file);
   foreach ($lines as $key => $line) {
     if (preg_match("%^dev %", $line)
-     || preg_match("%^auth-user-pass%", $line)
-     || preg_match("%^comp-lzo%", $line)) {
+     || preg_match("%^auth-user-pass%", $line)) {
       unset($lines[$key]);
     }
   }
@@ -116,18 +130,34 @@ foreach ($files as $filename) {
         . "tls-auth /tmp/openvpncl/ta.key 1\n"
         . "syslog\n"
         . "script-security 2\n"
-        . "dev tun1\n"
-        . "auth sha1\n"
-        . "comp-lzo adaptive\n"
-        . "mtu-disc yes\n"
-        . "passtos";
+        . "dev tun1\n";
 
   // write remaining rest of ovpn to target file
   file_put_contents($sc . "/openvpn.conf", trim($file));
   out("Wrote config for server "
-     . str_replace("serverconfigs/", "", $sc) . ".");
+     . str_replace("serverconfigs/", "", $sc) . " ("
+     . sprintf("%0.2f", 100/count($files)*$cnt) . "%).");
 }
 
+out("");
+// check if all server config directories are complete
+$neededFiles = array("ca.crt", "openvpn.conf", "ta.key");
+foreach ($scDirs as $scDir) {
+  foreach ($neededFiles as $neededFile) {
+    if (!file_exists($scDir . "/" . $neededFile)) {
+      foreach ($neededFiles as $nukeFile) {
+        if (file_exists($scDir . "/" . $nukeFile)) {
+          unlink ($scDir . "/" . $nukeFile);
+        }
+      }
+      if (file_exists($scDir)) rmdir ($scDir);
+      $sc = str_replace("serverconfigs/", "", $scDir);
+      out ("Removed incomplete server configs for " . $sc . ".");
+    }
+  }
+}
+
+out("");
 out("Job's done.");
 
 // display output
