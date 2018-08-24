@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v1.10                                       #
+#   VPN speed check script v1.11                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -16,11 +16,20 @@
 # load config
 DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
 source $DIRNAME/config
+if [ ! -f "$JFFSPATH/myconfig" ]; then
+  source $DIRNAME/myconfig
+fi
+
+# log script call
+if [ "$LOGGING" == "yes" ]; then
+  NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
+  echo $NOWSTAMP speedcheck script called >> $GENERALLOG
+fi
 
 # kill all vpn connection scripts
 killall -q vpn
 
-# check if we're connected to the internet
+# check if we're connected to the WAN
 sh $CCSCRIPT
 
 # check if we're connected to the VPN

@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Connection check script v2.05                                      #
+#   WAN connection check script v2.06                                  #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -14,6 +14,9 @@
 # load config
 DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
 source $DIRNAME/config
+if [ -f "$JFFSPATH/myconfig" ]; then
+  source $DIRNAME/myconfig
+fi
 
 # repeatedly ping specified domain
 PINGFAILS=0
@@ -37,7 +40,7 @@ if [ $PINGFAILS -lt $MAXFAILS ]; then
   exit
 fi
 
-# ping results evaluation negative: change VPN exit node
-echo There is probably no internet connection.
-echo Trying new VPN server.
+# ping results evaluation negative: try to change VPN exit node
+echo There is probably no WAN connection.
+echo Trying new VPN server anyway.
 $VPNSCRIPT rnd

@@ -1,0 +1,4 @@
+jffs/usr/bin/myconfig
+*.json
+*.log
+*.xml

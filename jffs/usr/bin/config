@@ -8,7 +8,25 @@
 #   This script must be located in the same folder as the vpn,         #
 #   speedcheck and checkcon scripts.                                   #
 #                                                                      #
+#   If you want to override it, make a copy named "myconfig" of it     #
+#   and place it in the same folder as this script, then modify the    #
+#   settings in myconfig to your personal needs.                       #
+#                                                                      #
+#                                                                      #
 ########################################################################
+
+
+########################################################################
+##                                                                    ##
+## general config                                                     ##
+##                                                                    ##
+########################################################################
+
+# log script calls to log file (yes or no)
+# default: no
+LOGGING=no
+GENERALLOG=/jffs/general.log
+
 
 ########################################################################
 ##                                                                    ##
