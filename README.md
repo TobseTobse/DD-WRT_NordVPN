@@ -136,6 +136,17 @@ Please do not edit below the "configuration end" line.
 
 If you connect to your router via SSH or Telnet you can call the scripts like that:
 
+`config`
+
+Don't touch this script. It will be overwritten with the next repository checkout. If you need a custom configuration make a copy of this file and name the copy "myconfig".
+
+```
+cd /jffs/usr/bin
+cp config myconfig
+```
+
+Then modify the myconfig file. It will override the config file automatically.
+
 `checkcon`
 
 This script checks if you can ping the host specified in the script configuration.
@@ -150,7 +161,7 @@ You can call the script with a parameter: `speedcheck checkonly` doesn't change 
 
 `vpn {server shortcut}`
 
-This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca06` or `vpn nl03`).
+This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca0006tcp` or `vpn nl0053udp`).
 When you call the script with `vpn rnd` it will switch to a randomly selected VPN server from the list in the serverconfigs directory.
 
 ### Updating the server configuration files
