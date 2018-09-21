@@ -96,7 +96,7 @@ DEADLOGFILE=/jffs/servers.dead.log
 
 # minimum speed in Mbit/s you expect from the VPN connection
 # default: 2
-MINIMUMSPEED=6
+MINIMUMSPEED=4
 
 # path to VPN script
 # default: /jffs/usr/bin/vpn
