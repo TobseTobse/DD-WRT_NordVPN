@@ -39,8 +39,10 @@ Now navigate in the DD-WRT menu to Setup > Basic Setup. Make sure "Gateway" and 
 Put the USB memory stick into the slot. In the DD-WRT menu navigate to _Administration > Diagnosis_.
 Enter the following into the "commands" textbox:
 
-`sleep 5 && mount -o bin /dev/sda1 /jffs
-sleep 30 && /jffs/usr/bin/speedcheck`
+```
+sleep 5 && mount -o bin /dev/sda1 /jffs
+sleep 30 && /jffs/usr/bin/speedcheck
+```
 
 Save this as **Startup** with the button below.
 
