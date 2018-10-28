@@ -198,7 +198,6 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   if [ "$NEWIP" == "$OLDIP" ]; then
     echo IPv4 hasn\'t changed.
     VPNROUTE=`route -n | grep $VPNINTERFACE`
-    exit
     if [ "$VPNROUTE" == "" ]; then
 
       # log dead server
