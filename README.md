@@ -183,6 +183,11 @@ Breathe. It's all good. The VPN scripts write the following files into /jffs:
 - *servers.bad.log*: a log with measured connection speeds of servers below the configured speed threshold
 - *speedtestservers.xml*: this file contains servers via which the connection speed can be measured
 
+### Why do the scripts make use of this weird app-1540758312.000webhostapp.com URL?
+
+Yes, that's a good question. The problem lays in the limited capability of DD-WRT's built-in wget command. To keep the firmware as slim as possible the DD-WRT devs didn't implement the possibility to fetch HTTPS URLs with this command - it only understands HTTP. Unfortunately, both ipinfo.io and github.com have followed Google's call to switch to HTTPS and made HTTP URLs unavailable for our wget. To keep the scripts working I have placed some one-line PHP scripts at this free hoster to proxy the requests our routers make to ipinfo.io and github.com. If you don't feel safe with this solution you can host these scripts at your own webserver, of course. In this case simply upload the scripts in the php directory to your server and add the IPINFOURL and HTTPSPROXYURL to *myconfig*.
+
+
 ### Troubleshooting
 
 - Try removing the kill switch we have added as firewall script. Open a website with a browser being connected to the DD-WRT router. Do you get a result? Then your hardware setup and routing is fine. No result? Dang! Try a different version of DD-WRT. DD-WRT releases are pretty buggy sometimes.
