@@ -39,11 +39,14 @@ Now navigate in the DD-WRT menu to Setup > Basic Setup. Make sure "Gateway" and 
 Put the USB memory stick into the slot. In the DD-WRT menu navigate to _Administration > Diagnosis_.
 Enter the following into the "commands" textbox:
 
-`sleep 5 && mount -o bin /dev/sda1 /jffs`
+```
+sleep 5 && mount -o bin /dev/sda1 /jffs
+sleep 30 && /jffs/usr/bin/speedcheck
+```
 
 Save this as **Startup** with the button below.
 
-This will mount your USB stick when the router boots up to /jffs.
+This will mount your USB stick when the router boots up to /jffs and ensures your router gets a valid exit node right after booting, for the case your predefined exit node became invalid over time.
 
 Now enter the following into the textbox:
 
