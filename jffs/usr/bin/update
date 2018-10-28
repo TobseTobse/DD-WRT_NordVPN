@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v1.03                                                #
+#   Update script v1.04                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -13,14 +13,21 @@
 #                                                                      #
 ########################################################################
 
-# Master URL
-URL=https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
+# load config
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+source $DIRNAME/config
+if [ ! -f "$JFFSPATH/myconfig" ]; then
+  source $DIRNAME/myconfig
+fi
 
+FETCHURL=$HTTPSPROXYURL$GITHUBURL
 echo Updating checkcon script...
-wget -t 3 -T 10 $URL/jffs/usr/bin/checkcon -o checkcon
+wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/checkcon -o checkcon
 echo Updating speedcheck script...
-wget -t 3 -T 10 $URL/jffs/usr/bin/speedcheck -o speedcheck
+wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/speedcheck -o speedcheck
 echo Updating vpn script...
-wget -t 3 -T 10 $URL/jffs/usr/bin/vpn -o vpn
+wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/vpn -o vpn
 echo Updating update script...
-wget -t 3 -T 10 $URL/jffs/usr/bin/update -o update
+wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/update -o update
+echo Updating global config script...
+wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/config -o config

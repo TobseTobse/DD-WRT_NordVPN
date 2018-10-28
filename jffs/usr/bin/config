@@ -87,6 +87,13 @@ IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 # default: /jffs/servers.dead.log
 DEADLOGFILE=/jffs/servers.dead.log
 
+# custom ipinfo.io URL (because of wget HTTPS insufficiency)
+# if you want to host the ipinfo proxy scripts yourself please
+# change this value to your address. The following scripts are expected
+# at this site, forwarding ipinfo.io requests:
+# city, country, ip, org, region
+IPINFOURL=http://app-1540758312.000webhostapp.com
+
 
 ########################################################################
 ##                                                                    ##
@@ -96,7 +103,7 @@ DEADLOGFILE=/jffs/servers.dead.log
 
 # minimum speed in Mbit/s you expect from the VPN connection
 # default: 2
-MINIMUMSPEED=4
+MINIMUMSPEED=6
 
 # path to VPN script
 # default: /jffs/usr/bin/vpn
@@ -152,3 +159,18 @@ PINGTRIES=10
 # maximum amount of failed pings during test
 # default: 5
 MAXFAILS=5
+
+
+########################################################################
+##                                                                    ##
+## update config                                                      ##
+##                                                                    ##
+########################################################################
+
+# GitHub Master URL
+# default: https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
+GITHUBURL=https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
+
+# HTTPS to HTTP proxy URL
+# default: http://app-1540758312.000webhostapp.com?url=
+HTTPSPROXYURL=http://app-1540758312.000webhostapp.com/proxy?url=

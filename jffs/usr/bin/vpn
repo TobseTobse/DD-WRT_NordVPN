@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v3.06                                         #
+#   VPN connector script v3.07                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -118,7 +118,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   let TRYNUMBER=$RETRIESDONE+1
   echo This is try \#$TRYNUMBER of $MAXTRIES.
   echo Connecting to server $PARAM1.
-  OLDIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
+  OLDIP=`wget -t 3 -T 10 -q -O - $IPINFOURL/ip`
   NEWIP=$OLDIP
 
   # check if we're connected to the VPN
@@ -139,7 +139,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       NEWIP=$OLDIP
       VPNROUTE=`route -n | grep $VPNINTERFACE`
       if [ "$VPNROUTE" == "" ]; then
-        NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
+        NEWIP=`wget -t 3 -T 10 -q -O - $IPINFOURL/ip`
       fi
     done
     echo
@@ -188,7 +188,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       NEWIP=$OLDIP
       VPNROUTE=`route -n | grep $VPNINTERFACE`
       if [ "$VPNROUTE" != "" ]; then
-        NEWIP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/ip`
+        NEWIP=`wget -t 3 -T 10 -q -O - $IPINFOURL/ip`
       fi
     fi
   done
@@ -198,6 +198,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   if [ "$NEWIP" == "$OLDIP" ]; then
     echo IPv4 hasn\'t changed.
     VPNROUTE=`route -n | grep $VPNINTERFACE`
+    exit
     if [ "$VPNROUTE" == "" ]; then
 
       # log dead server
@@ -212,33 +213,33 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     echo $PARAM1 > $CURRENTSERVERFILE
     echo New IPv4 is $NEWIP.
     if [ "$CURLSUPPORTED" == "yes" ]; then
-      CITY=$(curl --connect-timeout 3 -ks https://ipinfo.io/city)
+      CITY=$(curl --connect-timeout 3 -ks $IPINFOURL/city)
     else
-      CITY=`wget -t 3 -T 10 -q -O - http://ipinfo.io/city`
+      CITY=`wget -t 3 -T 10 -q -O - $IPINFOURL/city`
     fi
     if [ "$CITY" == "" ]; then
       CITY="an unknown city"
     fi
     if [ "$CURLSUPPORTED" == "yes" ]; then
-      REGION=$(curl --connect-timeout 3 -ks https://ipinfo.io/region)
+      REGION=$(curl --connect-timeout 3 -ks $IPINFOURL/region)
     else
-      REGION=`wget -t 3 -T 10 -q -O - http://ipinfo.io/region`
+      REGION=`wget -t 3 -T 10 -q -O - $IPINFOURL/region`
     fi
     if [ "$REGION" == "" ]; then
       REGION="region unknown"
     fi
     if [ "$CURLSUPPORTED" == "yes" ]; then
-      ISPN=$(curl --connect-timeout 3 -ks https://ipinfo.io/org)
+      ISPN=$(curl --connect-timeout 3 -ks $IPINFOURL/org)
     else
-      ISP=`wget -t 3 -T 10 -q -O - http://ipinfo.io/org`
+      ISP=`wget -t 3 -T 10 -q -O - $IPINFOURL/org`
     fi
     if [ "$ISP" == "" ]; then
       ISP="an unknown ISP"
     fi
     if [ "$CURLSUPPORTED" == "yes" ]; then
-      COUNTRYCODE=$(curl --connect-timeout 3 -ks https://ipinfo.io/country)
+      COUNTRYCODE=$(curl --connect-timeout 3 -ks $IPINFOURL/country)
     else
-      COUNTRYCODE=`wget -t 3 -T 10 -q -O - http://ipinfo.io/country`
+      COUNTRYCODE=`wget -t 3 -T 10 -q -O - $IPINFOURL/country`
     fi
     echo $COUNTRYCODE > $CURRENTCOUNTRYFILE
     if [ "$COUNTRYCODE" == "" ]; then
