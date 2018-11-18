@@ -66,8 +66,8 @@ SPEEDTESTSCRIPT=/jffs/usr/bin/speedcheck
 VPNLOG=/tmp/openvpncl/openvpn.log
 
 # exit node connection timeout in seconds (approximate)
-# default: 10
-CONNECTIONTIMEOUT=10
+# default: 20
+CONNECTTIMEOUT=20
 
 # timeout in approximate seconds to wait
 # for old VPN connection to drop
@@ -87,12 +87,20 @@ IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 # default: /jffs/servers.dead.log
 DEADLOGFILE=/jffs/servers.dead.log
 
+# http-URL (mind: NOT https-URL!) to determine public IP address
+# default: http://icanhazip.com
+IPADDRESSURL=http://icanhazip.com
+
 # custom ipinfo.io URL (because of wget HTTPS insufficiency)
 # if you want to host the ipinfo proxy scripts yourself please
 # change this value to your address. The following scripts are expected
 # at this site, forwarding ipinfo.io requests:
 # city, country, ip, org, region
 IPINFOURL=http://app-1540758312.000webhostapp.com
+
+# country names JSON URL
+# default: http://country.io/names.json
+COUNTRYNAMESJSONURL=http://country.io/names.json
 
 
 ########################################################################
@@ -104,6 +112,10 @@ IPINFOURL=http://app-1540758312.000webhostapp.com
 # minimum speed in Mbit/s you expect from the VPN connection
 # default: 2
 MINIMUMSPEED=6
+
+# minimum time in seconds between two reboots
+# default: 300
+MINREBOOTPERIOD=300
 
 # path to VPN script
 # default: /jffs/usr/bin/vpn
@@ -132,6 +144,14 @@ GOODLOGFILE=/jffs/servers.good.log
 # log server speeds lower than minimum speed to this file
 # default: /jffs/servers.bad.log
 BADLOGFILE=/jffs/servers.bad.log
+
+# path to speedcheck started time file
+# default: /jffs/ststarted
+STSFILE=/jffs/ststarted
+
+# path to last time rebooted file
+# default: /jffs/lastreboot
+LTRFILE=/jffs/lastreboot
 
 # path to speedtest server XML
 # default: speedtestservers.xml

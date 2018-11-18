@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v3.07                                         #
+#   VPN connector script v4.01                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -44,6 +44,7 @@ PARAM1="$1"
 
 # check for empty parameter 1
 if [ "$PARAM1" == "" ]; then
+  echo -e "\033[1;31mNo parameter given.\033[0m"
   echo Please use a server directory as parameter from the following list:
   ls $CONFIGFILESDIR
   echo If you\'re not sure which one to pick, just use "rnd" to pick a random server
@@ -53,16 +54,17 @@ fi
 # check for wrong parameter 1
 if [ "$PARAM1" != "rnd" ]; then
   if [ ! -d "$CONFIGFILESDIR/$PARAM1/" ]; then
-    echo Directory $CONFIGFILESDIR/$PARAM1/ doesn\'t exist.
+    echo -e "\033[1;31mDirectory $CONFIGFILESDIR/$PARAM1/ doesn't exist.\033[0m"
     exit 1
   fi
 fi
 
 # read servers list outside of loop
 if [ "$1" == "rnd" ]; then
-  echo "Reading servers list."
+  echo Reading servers list...
   SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
-  echo
+  NRDIRS=`ls $CONFIGFILESDIR | wc -l`
+  echo Got $NRDIRS servers to connect to.
 fi
 
 RETRIESDONE=0
@@ -116,35 +118,49 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
 
   # init
   let TRYNUMBER=$RETRIESDONE+1
-  echo This is try \#$TRYNUMBER of $MAXTRIES.
-  echo Connecting to server $PARAM1.
-  OLDIP=`wget -t 3 -T 10 -q -O - $IPINFOURL/ip`
+  echo
+  echo -e "\033[1;37mThis is try #$TRYNUMBER of $MAXTRIES."
+  echo -e "Connecting to server $PARAM1.\033[0m"
+  OLDIP=`wget -t 3 -T 10 -q -O - $IPADDRESSURL`
   NEWIP=$OLDIP
 
   # check if we're connected to the VPN
   VPNROUTE=`route -n | grep $VPNINTERFACE`
   if [ "$VPNROUTE" == "" ]; then
-    echo We\'re not connected to the VPN.
+    echo -e "\033[1;31mWe're not connected to the VPN.\033[0m"
   else
+
+    # display current public IPv4
+    if [ "$OLDIP" == "" ]; then
+      echo -e "\033[1;31mCurrent public IPv4 couldn't be determined.\033[0m"
+    else
+      echo Current public IPv4 is $OLDIP
+    fi
+
     # drop the VPN
-    echo Current IPv4 is $OLDIP
-    CNT=0
-    killall openvpn
     printf "Waiting for the VPN to drop."
+    CNT=0
     while [ $CNT -le $DROPTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
     do
+      killall -q openvpn
       sleep 1
       let CNT=$CNT+1
       printf "."
       NEWIP=$OLDIP
       VPNROUTE=`route -n | grep $VPNINTERFACE`
       if [ "$VPNROUTE" == "" ]; then
-        NEWIP=`wget -t 3 -T 10 -q -O - $IPINFOURL/ip`
+        NEWIP=`wget -t 3 -T 10 -q -O - $IPADDRESSURL`
       fi
     done
     echo
   fi
-  echo Current IPv4 is $NEWIP.
+
+  # display current public IPv4
+  if [[ -z "${NEWIP// }" ]]; then
+    echo -e "\033[1;31mCurrent public IPv4 couldn't be determined.\033[0m"
+  else
+    echo Current public IPv4 is $NEWIP
+  fi
 
   # copy given server files and restart the VPN
   cp $CONFIGFILESDIR/$PARAM1/* /tmp/openvpncl/
@@ -158,14 +174,13 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
 
   # wait for new IPv4
   OLDIP=$NEWIP
-  CNT=0
+  STARTSTAMP=`date +%s`
+  RUNNINGPERIOD=0
   SLEEP=1
   echo "Waiting for the VPN to come up:"
-  echo
-  while [ $CNT -le $CONNECTIONTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
+  while [ $RUNNINGPERIOD -le $CONNECTTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
   do
     sleep $SLEEP
-    let CNT=$CNT+1
     OPENVPNLOG_NEW=
     if [ -f $VPNLOG ]; then
       OPENVPNLOG_NEW=`cat $VPNLOG`
@@ -176,11 +191,11 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
             FOUNDLINE="yes"
           fi
           if [ "$FOUNDLINE" == "yes" ] && [ "$LINE" != "$LASTLOGLINE" ]; then
-            echo $LINE
+            echo -e "\033[1;36m$LINE\033[0m"
           fi
         done < $VPNLOG
         if [ "$FOUNDLINE" == "no" ]; then
-          echo "${OPENVPNLOG_NEW}"
+          echo -e "\033[1;36m${OPENVPNLOG_NEW}\033[0m"
         fi
       fi
       OPENVPNLOG_OLD=$OPENVPNLOG_NEW
@@ -188,29 +203,38 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       NEWIP=$OLDIP
       VPNROUTE=`route -n | grep $VPNINTERFACE`
       if [ "$VPNROUTE" != "" ]; then
-        NEWIP=`wget -t 3 -T 10 -q -O - $IPINFOURL/ip`
+        NEWIP=`wget -t 3 -T 10 -q -O - $IPADDRESSURL`
       fi
     fi
+    NOW=`date +%s`
+    RUNNINGPERIOD=`expr $NOW - $STARTSTAMP`
   done
 
   # echo new IPv4, city and country
   echo
   if [ "$NEWIP" == "$OLDIP" ]; then
-    echo IPv4 hasn\'t changed.
+    echo -e "\033[1;31mIPv4 hasn't changed within $CONNECTTIMEOUT seconds.\033[0m"
     VPNROUTE=`route -n | grep $VPNINTERFACE`
     if [ "$VPNROUTE" == "" ]; then
 
       # log dead server
       NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
       echo $NOWSTAMP $PARAM1 >> $DEADLOGFILE
-      echo "Houston, we have a problem. Connecting to exit node $PARAM1 has failed."
+      echo -e "\033[1;31mHouston, we have a problem. Connecting to exit node $PARAM1 has failed.\033[0m"
       echo
       echo
     fi
   else
     echo Current server is $PARAM1.
     echo $PARAM1 > $CURRENTSERVERFILE
-    echo New IPv4 is $NEWIP.
+    
+    # display current public IPv4
+    if [ "$NEWIP" == "" ]; then
+      echo -e "\033[1;31mNew public IPv4 couldn't be determined.\033[0m"
+    else
+      echo -e "\033[1;32mNew public IPv4 is $NEWIP.\033[0m"
+    fi
+    
     if [ "$CURLSUPPORTED" == "yes" ]; then
       CITY=$(curl --connect-timeout 3 -ks $IPINFOURL/city)
     else
@@ -225,7 +249,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       REGION=`wget -t 3 -T 10 -q -O - $IPINFOURL/region`
     fi
     if [ "$REGION" == "" ]; then
-      REGION="region unknown"
+      REGION="an region unknown"
     fi
     if [ "$CURLSUPPORTED" == "yes" ]; then
       ISPN=$(curl --connect-timeout 3 -ks $IPINFOURL/org)
@@ -240,17 +264,21 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     else
       COUNTRYCODE=`wget -t 3 -T 10 -q -O - $IPINFOURL/country`
     fi
+    if [ "$COUNTRYCODE" == "" ]; then
+      COUNTRYCODE="${PARAM1:0:2}"
+    fi
+    COUNTRYCODE=`echo "$COUNTRYCODE" | awk '{print toupper($0)}'`
     echo $COUNTRYCODE > $CURRENTCOUNTRYFILE
     if [ "$COUNTRYCODE" == "" ]; then
       COUNTRY="country unknown"
     else
       if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ]; then
-        wget -q http://country.io/names.json -P $JFFSPATH -O $COUNTRIESJSON
+        wget -q $COUNTRYNAMESJSONURL -P $JFFSPATH -O $COUNTRIESJSON
       fi
       COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | grep -E -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | grep -E -o '[^\"]{3,}'`
     fi
-    echo New geolocation is $CITY, region $REGION, $COUNTRY.
-    echo Our end service provider is $ISP.
+    echo -e "\033[1;32mNew geolocation is $CITY in $REGION, $COUNTRY."
+    echo -e "Our end service provider is $ISP.\033[0m"
     RETRIESDONE=$MAXTRIES
     $SPEEDTESTSCRIPT
     exit

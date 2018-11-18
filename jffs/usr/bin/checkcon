@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   WAN connection check script v2.06                                  #
+#   WAN connection check script v3.01                                  #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -18,29 +18,55 @@ if [ -f "$JFFSPATH/myconfig" ]; then
   source $DIRNAME/myconfig
 fi
 
-# repeatedly ping specified domain
-PINGFAILS=0
-CNT=0
-while [ $CNT -lt $PINGTRIES ]
-do
-  if ! ping -q -c 1 -W 1 $PINGSERVER >/dev/null; then
-    let "PINGFAILS++"
-    printf "-"
+# check if we're connected to the VPN
+VPNROUTE=`route -n | grep $VPNINTERFACE`
+if [ "$VPNROUTE" == "" ]; then
+  echo -e "\033[1;31mVPN has no route. That means we're not connected.\033[0m"
+  if [ "$1" == "checkonly" ]; then
+    echo Taking no actions.
+    exit 0
   else
-    printf "+"
+    echo Trying new VPN server.
+    $VPNSCRIPT rnd
   fi
-  let "CNT++"
-done
+else
 
-# ping results evaluation positive: exit
-printf "\n"
-echo $PINGFAILS/$PINGTRIES pings to $PINGSERVER failed.
-if [ $PINGFAILS -lt $MAXFAILS ]; then
-  echo All systems functioning within normal parameters.
-  exit
+  # repeatedly ping specified domain
+  printf "Pinging $PINGSERVER: "
+  PINGFAILS=0
+  CNT=0
+  while [ $CNT -lt $PINGTRIES ]
+  do
+    if ! ping -q -c 1 -W 1 $PINGSERVER >/dev/null; then
+      let "PINGFAILS++"
+      printf "-"
+    else
+      printf "+"
+    fi
+    let "CNT++"
+  done
+
+  # ping results evaluation positive: exit
+  printf "\n"
+  echo $PINGFAILS of $PINGTRIES pings have failed.
+  if [ $PINGFAILS -lt $MAXFAILS ]; then
+    echo -e "\033[1;32mAll systems are functioning within normal parameters.\033[0m"
+    exit
+  fi
+
+  # log ping fail
+  if [ "$LOGGING" == "yes" ]; then
+    NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
+    echo $NOWSTAMP $PINGFAILS/$PINGTRIES tries pinging $PINGSERVER failed >> $GENERALLOG
+  fi
+
+  # ping results evaluation negative: try to change VPN exit node
+  echo -e "\033[1;31mThere is probably no WAN connection.\033[0m"
+  if [ "$1" == "checkonly" ]; then
+    echo Taking no actions.
+    exit 0
+  else
+    echo Trying new VPN server anyway.
+    $VPNSCRIPT rnd
+  fi
 fi
-
-# ping results evaluation negative: try to change VPN exit node
-echo There is probably no WAN connection.
-echo Trying new VPN server anyway.
-$VPNSCRIPT rnd
