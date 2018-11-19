@@ -25,7 +25,7 @@
 # log script calls to log file (yes or no)
 # default: no
 LOGGING=no
-GENERALLOG=/jffs/general.log
+GENERALLOG=/jffs/logs/general.log
 
 
 ########################################################################
@@ -65,6 +65,10 @@ SPEEDTESTSCRIPT=/jffs/usr/bin/speedcheck
 # path to openVPN log file
 VPNLOG=/tmp/openvpncl/openvpn.log
 
+# maximum execution time of VPN script in seconds
+# default: 600
+MAXVPNEXECTIME=600
+
 # exit node connection timeout in seconds (approximate)
 # default: 20
 CONNECTTIMEOUT=20
@@ -85,7 +89,7 @@ IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 
 # log servers which couldn't be connected to
 # default: /jffs/servers.dead.log
-DEADLOGFILE=/jffs/servers.dead.log
+DEADLOGFILE=/jffs/logs/servers.dead.log
 
 # http-URL (mind: NOT https-URL!) to determine public IP address
 # default: http://icanhazip.com
@@ -102,6 +106,9 @@ IPINFOURL=http://app-1540758312.000webhostapp.com
 # default: http://country.io/names.json
 COUNTRYNAMESJSONURL=http://country.io/names.json
 
+# path to lock file
+# default: /jffs/tmp/vpn.lock
+VPNLOCKFILE=/jffs/tmp/vpn.lock
 
 ########################################################################
 ##                                                                    ##
@@ -110,7 +117,7 @@ COUNTRYNAMESJSONURL=http://country.io/names.json
 ########################################################################
 
 # minimum speed in Mbit/s you expect from the VPN connection
-# default: 2
+# default: 6
 MINIMUMSPEED=6
 
 # minimum time in seconds between two reboots
@@ -139,19 +146,19 @@ CONFIGFILESDIR=/jffs/serverconfigs
 
 # log server speeds equal or higher than minimum speed to this file
 # default: /jffs/servers.good.log
-GOODLOGFILE=/jffs/servers.good.log
+GOODLOGFILE=/jffs/logs/servers.good.log
 
 # log server speeds lower than minimum speed to this file
 # default: /jffs/servers.bad.log
-BADLOGFILE=/jffs/servers.bad.log
+BADLOGFILE=/jffs/logs/servers.bad.log
 
 # path to speedcheck started time file
 # default: /jffs/ststarted
-STSFILE=/jffs/ststarted
+STSFILE=/jffs/tmp/ststarted.lock
 
 # path to last time rebooted file
 # default: /jffs/lastreboot
-LTRFILE=/jffs/lastreboot
+LTRFILE=/jffs/tmp/lastreboot.lock
 
 # path to speedtest server XML
 # default: speedtestservers.xml
