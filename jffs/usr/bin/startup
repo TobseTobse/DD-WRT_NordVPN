@@ -1,0 +1,32 @@
+#!/bin/sh
+
+########################################################################
+#                                                                      #
+#   Startup script v1.00                                               #
+#   (c) by Tobse (cthullu@protonmail.com) in 2018                      #
+#                                                                      #
+#   This script must be located on a USB stick, mounted on /jffs and   #
+#   expects the presence of the speed check script in /jffs/usr/bin/.  #
+#   All scripts must be "chmod ugo+x" in order to be executable.       #
+#                                                                      #
+########################################################################
+
+# load config
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+source $DIRNAME/config
+if [ -f "$JFFSPATH/myconfig" ]; then
+  source $DIRNAME/myconfig
+fi
+
+# delete orphaned lock files
+if [ -f "$VPNLOCKFILE" ]; then
+  rm $VPNLOCKFILE
+  echo Deleted vpn script lock file.
+fi
+if [ -f "$STSFILE" ]; then
+  rm $STSFILE
+  echo Deleted speedcheck script lock file.
+fi
+
+# execute speed check
+$JFFSPATH/speedcheck

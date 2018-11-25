@@ -22,10 +22,14 @@
 ##                                                                    ##
 ########################################################################
 
+# top directory of scripts
+# default: /jffs
+JFFSPATH=/jffs
+
 # log script calls to log file (yes or no)
 # default: no
 LOGGING=no
-GENERALLOG=/jffs/logs/general.log
+GENERALLOG=$JFFSPATH/logs/general.log
 
 
 ########################################################################
@@ -39,28 +43,24 @@ GENERALLOG=/jffs/logs/general.log
 VPNINTERFACE=tun1
 
 # directory containing the prepared VPN configuration files
-# default: /jffs/serverconfigs
-CONFIGFILESDIR=/jffs/serverconfigs
+# default: $JFFSPATH/serverconfigs
+CONFIGFILESDIR=$JFFSPATH/serverconfigs
 
 # path to file containing the name of the current server
-# default: /jffs/currentserver
-CURRENTSERVERFILE=/jffs/currentserver
+# default: $JFFSPATH/currentserver
+CURRENTSERVERFILE=$JFFSPATH/currentserver
 
 # path to file containing the name of the current country
-# default: /jffs/currentcountry
-CURRENTCOUNTRYFILE=/jffs/currentcountry
-
-# path to countries JSON
-# default: /jffs/
-JFFSPATH=/jffs/
+# default: $JFFSPATH/currentcountry
+CURRENTCOUNTRYFILE=$JFFSPATH/currentcountry
 
 # name of JSON file with countries shortcuts
 # default: countries.json
 COUNTRIESJSON=countries.json
 
 # path to speed test script
-# default: /jffs/usr/bin/speedcheck
-SPEEDTESTSCRIPT=/jffs/usr/bin/speedcheck
+# default: $JFFSPATH/usr/bin/speedcheck
+SPEEDTESTSCRIPT=$JFFSPATH/usr/bin/speedcheck
 
 # path to openVPN log file
 VPNLOG=/tmp/openvpncl/openvpn.log
@@ -88,8 +88,8 @@ MAXTRIES=10
 IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 
 # log servers which couldn't be connected to
-# default: /jffs/servers.dead.log
-DEADLOGFILE=/jffs/logs/servers.dead.log
+# default: $JFFSPATH/servers.dead.log
+DEADLOGFILE=$JFFSPATH/logs/servers.dead.log
 
 # http-URL (mind: NOT https-URL!) to determine public IP address
 # default: http://icanhazip.com
@@ -107,8 +107,8 @@ IPINFOURL=http://app-1540758312.000webhostapp.com
 COUNTRYNAMESJSONURL=http://country.io/names.json
 
 # path to lock file
-# default: /jffs/tmp/vpn.lock
-VPNLOCKFILE=/jffs/tmp/vpn.lock
+# default: $JFFSPATH/tmp/vpn.lock
+VPNLOCKFILE=$JFFSPATH/tmp/vpn.lock
 
 ########################################################################
 ##                                                                    ##
@@ -125,40 +125,40 @@ MINIMUMSPEED=6
 MINREBOOTPERIOD=300
 
 # path to VPN script
-# default: /jffs/usr/bin/vpn
-VPNSCRIPT=/jffs/usr/bin/vpn
+# default: $JFFSPATH/usr/bin/vpn
+VPNSCRIPT=$JFFSPATH/usr/bin/vpn
 
 # path to connection check script
-# default: /jffs/usr/bin/checkcon
-CCSCRIPT=/jffs/usr/bin/checkcon
+# default: $JFFSPATH/usr/bin/checkcon
+CCSCRIPT=$JFFSPATH/usr/bin/checkcon
 
 # path to file containing the name of the current server
-# default: /jffs/currentserver
-CURRENTSERVERFILE=/jffs/currentserver
+# default: $JFFSPATH/currentserver
+CURRENTSERVERFILE=$JFFSPATH/currentserver
 
 # path to file containing the name of the current country
-# default: /jffs/currentcountry
-CURRENTCOUNTRYFILE=/jffs/currentcountry
+# default: $JFFSPATH/currentcountry
+CURRENTCOUNTRYFILE=$JFFSPATH/currentcountry
 
 # directory containing the prepared VPN configuration files
-# default: /jffs/serverconfigs
-CONFIGFILESDIR=/jffs/serverconfigs
+# default: $JFFSPATH/serverconfigs
+CONFIGFILESDIR=$JFFSPATH/serverconfigs
 
 # log server speeds equal or higher than minimum speed to this file
-# default: /jffs/servers.good.log
-GOODLOGFILE=/jffs/logs/servers.good.log
+# default: $JFFSPATH/servers.good.log
+GOODLOGFILE=$JFFSPATH/logs/servers.good.log
 
 # log server speeds lower than minimum speed to this file
-# default: /jffs/servers.bad.log
-BADLOGFILE=/jffs/logs/servers.bad.log
+# default: $JFFSPATH/servers.bad.log
+BADLOGFILE=$JFFSPATH/logs/servers.bad.log
 
 # path to speedcheck started time file
-# default: /jffs/ststarted
-STSFILE=/jffs/tmp/ststarted.lock
+# default: $JFFSPATH/ststarted
+STSFILE=$JFFSPATH/tmp/ststarted.lock
 
 # path to last time rebooted file
-# default: /jffs/lastreboot
-LTRFILE=/jffs/tmp/lastreboot.lock
+# default: $JFFSPATH/lastreboot
+LTRFILE=$JFFSPATH/tmp/lastreboot.lock
 
 # path to speedtest server XML
 # default: speedtestservers.xml
