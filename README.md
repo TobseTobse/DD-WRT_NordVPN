@@ -41,7 +41,7 @@ Enter the following into the "commands" textbox:
 
 ```
 sleep 5 && mount -o bin /dev/sda1 /jffs
-sleep 30 && /jffs/usr/bin/speedcheck
+sleep 30 && /jffs/usr/bin/startup
 ```
 
 Save this as **Startup** with the button below.
