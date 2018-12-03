@@ -99,7 +99,7 @@ In the **OpenVPN Client** section fill the fields as follows:
 - Tunnel Device: TUN
 - Tunnel Protocol: UDP
 - Encryption Cipher: AES-256 CBC
-- Hash Algorithm: SHA1
+- Hash Algorithm: SHA512
 - **User Pass Authentication: Enable**
 - Username: _Your NordVPN username_
 - Password: _Your NordVPN password_
