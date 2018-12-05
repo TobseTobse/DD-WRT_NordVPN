@@ -83,18 +83,20 @@ if [ ! -z "$VPNROUTE" ]; then
     TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
     MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",80/${TOTALSECONDS}}")
 
-  # otherwise execute much more performant and precise country based test
+  # otherwise execute much more performant
+  # and precise country based test
   else
 
-    # update speedtest servers XML file if it's older than XMLUPDATEMINUTES hours
-    # (if we can't get the update, we will probably still have an older version)
+    # update speedtest servers XML file if it's older than
+    # XMLUPDATEMINUTES hours (if we can't get the update,
+    # we will probably still have an older version)
     NOW=`date +%s`
-    LASTUPDATED=`date -r $JFFSPATH/$XMLFILE +%s`
+    LASTUPDATED=`date -r $XMLFILE +%s`
     if [ "$LASTUPDATED" == "" ]; then
       LASTUPDATED=0
     fi
     DIFFSECONDS=$(($NOW-$LASTUPDATED))
-  if [ ! -f "$JFFSPATH/$XMLFILE" ]; then
+  if [ ! -f "$XMLFILE" ]; then
       echo Creating speedtest servers list.
       LASTUPDATED=0
     fi
@@ -102,7 +104,7 @@ if [ ! -z "$VPNROUTE" ]; then
     COMPARISON=`echo | awk -v me=$DIFFSECONDS -v mi=$XMLUPDATESECONDS '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
     if [ "$COMPARISON" == "greater" ]; then
       echo Updating speedtest servers list.
-      wget -q http://www.speedtest.net/speedtest-servers.php -O $XMLFILE
+      wget -q $STXMLURL -O $XMLFILE
     else
       printf "Servers list file is up to date. It's "
       printf "%d " "$(($DIFFSECONDS/60))"
@@ -121,7 +123,7 @@ if [ ! -z "$VPNROUTE" ]; then
     do
 
       # get speed test servers for current country
-      SPEEDSERVERS=$(cat "$JFFSPATH"/"$XMLFILE" | awk 'gsub(/ /, "___")' | grep "cc=\"$CURRENTCOUNTRYCODE\"")
+      SPEEDSERVERS=$(cat $XMLFILE | awk 'gsub(/ /, "___")' | grep "cc=\"$CURRENTCOUNTRYCODE\"")
 
       # count amount of speed servers in this country
       AMT=0

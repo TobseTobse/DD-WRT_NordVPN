@@ -157,12 +157,16 @@ BADLOGFILE=$JFFSPATH/logs/servers.bad.log
 STSFILE=$JFFSPATH/tmp/ststarted.lock
 
 # path to last time rebooted file
-# default: $JFFSPATH/lastreboot
+# default: $JFFSPATH/tmp/lastreboot
 LTRFILE=$JFFSPATH/tmp/lastreboot.lock
 
+# URL for speed test servers in XML format
+# default: http://c.speedtest.net/speedtest-servers-static.php
+STXMLURL=http://c.speedtest.net/speedtest-servers-static.php
+
 # path to speedtest server XML
-# default: speedtestservers.xml
-XMLFILE=speedtestservers.xml
+# default: $JFFSPATH/speedtestservers.xml
+XMLFILE=$JFFSPATH/speedtestservers.xml
 
 # update server XML once in at least that many minutes
 # default: 180
