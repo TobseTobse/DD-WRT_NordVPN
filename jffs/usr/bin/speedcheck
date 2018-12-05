@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v2.04                                       #
+#   VPN speed check script v2.05                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -77,11 +77,15 @@ if [ ! -z "$VPNROUTE" ]; then
     RESULT=`time wget -O /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
 
     # do some string acrobatics to calculate connection speed...
+    MEASUREDSPEED=""
     REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
     MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
     SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
     TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-    MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",80/${TOTALSECONDS}}")
+    TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+    if [ ${TOTALSECONDS%.*} -gt 0 ]; then
+      MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",80/${TOTALSECONDS}}")
+    fi
 
   # otherwise execute much more performant
   # and precise country based test
@@ -153,11 +157,14 @@ if [ ! -z "$VPNROUTE" ]; then
     RESULT=`time wget -O /dev/null $URL/random4000x4000.jpg 2>&1`
 
     # do some string acrobatics to calculate connection speed...
+    MEASUREDSPEED=""
     REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
     MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
     SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
     TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-    MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",((31625365/1024/1024)*8)/${TOTALSECONDS}}")
+    if [ ${TOTALSECONDS%.*} -gt 0 ]; then
+      MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",((31625365/1024/1024)*8)/${TOTALSECONDS}}")
+    fi
 
   fi
 
