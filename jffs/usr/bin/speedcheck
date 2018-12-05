@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v2.03                                       #
+#   VPN speed check script v2.04                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -106,14 +106,14 @@ if [ ! -z "$VPNROUTE" ]; then
       echo Updating speedtest servers list.
       wget -q $STXMLURL -O $XMLFILE
     else
-      printf "Servers list file is up to date. It's "
-      printf "%d " "$(($DIFFSECONDS/60))"
+      printf "\033[1;32mSpeed test servers list file is up to date. "
+      printf "It's %d " "$(($DIFFSECONDS/60))"
       printf minute
       COMPARISON=`echo | awk -v me=$DIFFSECONDS '{if (me<60 || me>119) printf ("plural"); else printf ("singular") }'`
       if [ "$COMPARISON" == "plural" ]; then
         printf s
       fi
-      echo " old."
+      echo -e " old.\033[0m"
     fi
 
     # get a random speed server for the current country

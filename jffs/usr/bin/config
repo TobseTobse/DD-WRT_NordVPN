@@ -87,6 +87,12 @@ MAXTRIES=10
 # default: "at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 
+# exclusive list of countries to connect to (don't connect to any
+# other countries than to these in this comma separated list)
+# syntax is like in IGNORECOUNTRIES
+# default:
+EXCLUSIVECOUNTRIES=
+
 # log servers which couldn't be connected to
 # default: $JFFSPATH/servers.dead.log
 DEADLOGFILE=$JFFSPATH/logs/servers.dead.log
