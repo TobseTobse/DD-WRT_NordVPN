@@ -93,6 +93,11 @@ IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 # default:
 EXCLUSIVECOUNTRIES=
 
+# force UDP or TCP protocol for "speedcheck rnd" command
+# could either be "tcp" or "udp" or nothing (pure random)
+# default:
+FORCEPROTOCOL=
+
 # log servers which couldn't be connected to
 # default: $JFFSPATH/servers.dead.log
 DEADLOGFILE=$JFFSPATH/logs/servers.dead.log

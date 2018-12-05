@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Startup script v1.00                                               #
+#   Startup script v1.01                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2018                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -14,7 +14,8 @@
 # load config
 DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
 source $DIRNAME/config
-if [ -f "$JFFSPATH/myconfig" ]; then
+if [ -f "$DIRNAME/myconfig" ]; then
+  echo -e "\033[1;36mIncluding personal config override.\033[0m"
   source $DIRNAME/myconfig
 fi
 

@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   WAN connection check script v3.01                                  #
+#   WAN connection check script v3.02                                  #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -14,7 +14,8 @@
 # load config
 DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
 source $DIRNAME/config
-if [ -f "$JFFSPATH/myconfig" ]; then
+if [ -f "$DIRNAME/myconfig" ]; then
+  echo -e "\033[1;36mIncluding personal config override.\033[0m"
   source $DIRNAME/myconfig
 fi
 
