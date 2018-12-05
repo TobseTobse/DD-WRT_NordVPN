@@ -1,11 +1,13 @@
 ## DD-WRT NordVPN scripts
 
+
 ### Synopsis
 
 The purpose of this project is to enable a router liberated by DD-WRT to connect to the service [NordVPN](https://nordvpn.com).
 All the clients in the network attached to the router will be able to use NordVPN via one login.
 The author of this software is in no way associated with embeDD GmbH or the hosting company NordVPN.
 Furthermore, the author of this software does not take on any responsibilities for damages resulting from this software or information.
+
 
 ### Prerequisites
 
@@ -17,6 +19,7 @@ When DD-WRT is up and running ensure that an OpenVPN client is available (_Servi
 If there is no User Pass Authentication in the OpenVPN client get a different version of DD-WRT for your router.
 You will also need a USB memory stick. Get the cheapest you can find at your local supplier, that will do. Size doesn't matter ;-)
 Last but not least you need a user account at [NordVPN](https://nordvpn.com) composed of username and password.
+
 
 ### Router behind router setup
 
@@ -73,9 +76,10 @@ In the "Additional Cron Jobs" textbox enter the following (be sure to have the l
 58 * * * * root killall -q vpn
 59 * * * * root killall -q speedtest
  0 * * * * root /jffs/usr/bin/speedcheck 2>&1
+ 0 3 * * * root /jffs/usr/bin/update 2>&1
 ```
 
-These jobs regularly check your internet connection and take on measurements if necessary (changing the VPN server or rebooting).
+These jobs regularly check your internet connection and take on measurements if necessary (changing the VPN server or rebooting). The last line updates the scripts automatically every night at 3 am, so you don't need to update the scripts yourself manually all the time. Just don't use this line if you don't wish nightly auto updates.
 
 Now reboot the router.
 
@@ -122,11 +126,13 @@ For all other fields not mentioned above: _leave empty or unchanged_
 Save and reboot your router.
 You should be good to go now.
 
+
 ### Check your external IP address
 
 First of all we would like to know whether we are using NordVPN or not right now.
 Connect your device with the DD-WRT router and disable all other connections from your device to any networks.
 Now check your IP at https://ipinfo.io. Does this look any familiar? No? Good, then you are connected via a NordVPN exit node ;-)
+
 
 ### Tweaking the script configurations
 
@@ -134,6 +140,7 @@ Usually, the scripts should work without any intervention from your side. The co
 You can tweak these scripts if you urgently feel the need to do so. In all other cases I recommend to refrain from doing that.
 When you edit the scripts you will be able to change a few values in their respective head sections.
 Please do not edit below the "configuration end" line.
+
 
 ### Usage of the scripts
 
@@ -167,6 +174,7 @@ You can call the script with a parameter: `speedcheck checkonly` doesn't change 
 This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca0006tcp` or `vpn nl0053udp`).
 When you call the script with `vpn rnd` it will switch to a randomly selected VPN server from the list in the serverconfigs directory.
 
+
 ### Updating the server configuration files
 
 It may happen that one day NordVPN will change (add, remove, modify) servers. Unfortunately, there is no easy way to handle this yet.
@@ -176,12 +184,14 @@ If you want to convert the OpenVPN files yourself you can download the ".upd1194
 
 If this is too much hassle for you just check on [the DD-WRT NordVPN project site](https://tobsetobse.github.io/DD-WRT_NordVPN) occasionally. I will try to keep the server configuration files a bit up-to-date but I won't include servers from US, UK and DE. Deal with it 8-)
 
+
 ### WTF...? I found new files in the /jffs directory
 
 Breathe. It's all good. The VPN scripts write the following files into /jffs:
 - *servers.good.log*: a log with measured connection speeds of servers above the configured speed threshold
 - *servers.bad.log*: a log with measured connection speeds of servers below the configured speed threshold
 - *speedtestservers.xml*: this file contains servers via which the connection speed can be measured
+
 
 ### Why do the scripts make use of this weird app-1540758312.000webhostapp.com URL?
 
