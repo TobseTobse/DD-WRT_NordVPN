@@ -95,7 +95,8 @@ chmod ugo+x *
 Now let's define an initial VPN server to connect to. In the DD-WRT menu go to _Services > VPN_.
 Pick one of the server configs you would like to connect to per default after the router has booted.
 You find these files in the serverconfigs directory.
-In the **OpenVPN Client** section fill the fields as follows:
+
+Read the configuration values from the openvpn.conf file. Try to match the fields in the **OpenVPN Client** section of the DD-WRT administration interface as good as possible. In my case the values currently look like this:
 
 - Start OpenVPN Client: Enable
 - Server IP/Name: _get the ip address from the "remote" line in openvpn.conf_
@@ -108,7 +109,7 @@ In the **OpenVPN Client** section fill the fields as follows:
 - Username: _Your NordVPN username_
 - Password: _Your NordVPN password_
 - Advanced Options: Enable
-- TLS Ciper: None
+- TLS Ciper: TLS-DHE-RSA-WITH-AES-256-CBC-SHA256
 - LZO Compression: Adaptive
 - NAT: Enable
 - Firewall Protection: Enable
@@ -121,7 +122,8 @@ In the **OpenVPN Client** section fill the fields as follows:
 - TLS Auth Key: _copy & paste the content of the ta.key file in the chosen serverconfig directory_
 - CA Cert: _copy & paste the content of the ca.crt file in the chosen serverconfig directory_
 
-For all other fields not mentioned above: _leave empty or unchanged_
+For all other fields not mentioned above: _leave empty or unchanged_.
+Just bear in mind that NordVPN can change these values at any time (they have done that already) and that it's always better to match the values yourself manually than taking my values.
 
 Save and reboot your router.
 You should be good to go now.
@@ -155,7 +157,7 @@ cd /jffs/usr/bin
 cp config myconfig
 ```
 
-Then modify the myconfig file. It will override the config file automatically.
+Then modify the myconfig file. All values in the myconfig file will override the ones from the config file automatically.
 
 `checkcon`
 
@@ -191,6 +193,7 @@ Breathe. It's all good. The VPN scripts write the following files into /jffs:
 - *servers.good.log*: a log with measured connection speeds of servers above the configured speed threshold
 - *servers.bad.log*: a log with measured connection speeds of servers below the configured speed threshold
 - *speedtestservers.xml*: this file contains servers via which the connection speed can be measured
+- *tmp*: this directory mainly contains lock files. The scripts need them to avoid parallel script execution or boot loops.
 
 
 ### Why do the scripts make use of this weird app-1540758312.000webhostapp.com URL?
