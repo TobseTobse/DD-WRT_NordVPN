@@ -187,7 +187,7 @@ STXMLURL=http://c.speedtest.net/speedtest-servers-static.php
 # default: $JFFSPATH/speedtestservers.xml
 XMLFILE=$JFFSPATH/speedtestservers.xml
 
-# update server XML once in at least that many minutes
+# update server XML not more than once in that many minutes
 # default: 180
 XMLUPDATEMINUTES=180
 

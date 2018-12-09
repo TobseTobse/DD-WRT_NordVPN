@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Startup script v1.02                                               #
+#   Startup script v1.03                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2018                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -10,6 +10,8 @@
 #   All scripts must be "chmod ugo+x" in order to be executable.       #
 #                                                                      #
 ########################################################################
+
+echo Startup triggered. Welcome.
 
 # load config
 DIRNAME="$( cd "$( dirname "$0" )" && pwd )"

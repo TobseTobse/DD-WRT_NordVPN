@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v2.09                                       #
+#   VPN speed check script v2.10                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -12,6 +12,8 @@
 #   */15 * * * * root /jffs/usr/bin/speedtest 2>&1                     #
 #                                                                      #
 ########################################################################
+
+echo Speed check invoked.
 
 # load config
 DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
@@ -222,4 +224,8 @@ if [ "$1" == "checkonly" ]; then
   exit 0
 fi
 
+# speed check failed requirements, so (re)invoke vpn script
+if [ -f $VPNLOCKFILE ]; then
+  rm $VPNLOCKFILE
+fi
 $VPNSCRIPT rnd

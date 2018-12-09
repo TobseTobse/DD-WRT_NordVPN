@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v1.07                                                #
+#   Update script v1.08                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -12,6 +12,8 @@
 #   0 3 * * * root /jffs/usr/bin/update 2>&1                           #
 #                                                                      #
 ########################################################################
+
+echo Update invoked.
 
 # load config
 DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
