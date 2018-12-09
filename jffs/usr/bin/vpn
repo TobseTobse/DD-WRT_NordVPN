@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v4.07                                         #
+#   VPN connector script v4.08                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -70,7 +70,9 @@ if [ "$PARAM1" == "" ]; then
   echo Please use a server directory as parameter from the following list:
   ls $CONFIGFILESDIR
   echo If you\'re not sure which one to pick, just use "rnd" to pick a random server
-  rm $VPNLOCKFILE
+  if [ -f $VPNLOCKFILE ]; then
+    rm $VPNLOCKFILE
+  fi
   exit 1
 fi
 
@@ -78,7 +80,9 @@ fi
 if [ "$PARAM1" != "rnd" ]; then
   if [ ! -d "$CONFIGFILESDIR/$PARAM1/" ]; then
     echo -e "\033[1;31mDirectory $CONFIGFILESDIR/$PARAM1/ doesn't exist.\033[0m"
-    rm $VPNLOCKFILE
+    if [ -f $VPNLOCKFILE ]; then
+      rm $VPNLOCKFILE
+    fi
     exit 1
   fi
 fi
@@ -88,7 +92,7 @@ if [ "$1" == "rnd" ]; then
   echo Reading servers list...
   SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
   NRDIRS=`ls $CONFIGFILESDIR | wc -l`
-  echo Got $NRDIRS servers to connect to.
+  echo Got $NRDIRS potential servers to connect to.
 fi
 
 RETRIESDONE=0
@@ -332,15 +336,19 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     echo -e "Our end service provider is $ISP.\033[0m"
     RETRIESDONE=$MAXTRIES
     $SPEEDTESTSCRIPT
-    rm $VPNLOCKFILE
+    if [ -f $VPNLOCKFILE ]; then
+      rm $VPNLOCKFILE
+    fi
     exit
   fi
   let RETRIESDONE=$RETRIESDONE+1
 done
 
 sleep $REBOOTWAIT
+if [ -f $LTRFILE ]; then
+  rm $LTRFILE
+fi
 NOWSTAMP=`date +%s`
-rm $LTRFILE
 echo $NOWSTAMP >> $LTRFILE
 echo Rebooting router.
 reboot

@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v2.08                                       #
+#   VPN speed check script v2.09                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -50,8 +50,8 @@ if [ ! -z "$VPNROUTE" ]; then
   # last reboot was more than ... seconds ago
   NOWSTAMP=`date +%s`
   if [ -f $STSFILE ]; then
-    LASTSTART=`cat $STSFILE`
     rm $STSFILE
+    LASTSTART=`cat $STSFILE`
     LSPTAGO=`expr $NOWSTAMP - $LASTSTART`
     echo -e "\033[1;31mLast speed check started $LSPTAGO seconds ago and is still running.\033[0m"
     BOOTDIFF=`expr $MINREBOOTPERIOD + 777`
@@ -61,7 +61,9 @@ if [ ! -z "$VPNROUTE" ]; then
     fi
     if [ "$BOOTDIFF" -ge "$MINREBOOTPERIOD" ]; then
       sleep $REBOOTWAIT
-      rm $LTRFILE
+      if [ -f $LTRFILE ]; then
+        rm $LTRFILE
+      fi
       echo $NOWSTAMP >> $LTRFILE
       reboot
     fi
@@ -175,11 +177,15 @@ if [ ! -z "$VPNROUTE" ]; then
   fi
 
   # delete start time file
-  rm $STSFILE
+  if [ -f $STSFILE ]; then
+    rm $STSFILE
+  fi
 
   if [ "$MEASUREDSPEED" == "" ]; then
     echo -e "\033[1;31mCouldn't measure speed.\033[0m"
-    rm $STSFILE
+    if [ -f $STSFILE ]; then
+      rm $STSFILE
+    fi
     exit 0
   else
     echo -e "\033[1;37mThe download took $TOTALSECONDS seconds."
@@ -195,7 +201,9 @@ if [ ! -z "$VPNROUTE" ]; then
       # log good speed to file
       echo $NOWSTAMP $CURRENTSERVER: $MEASUREDSPEED Mbit/s >> $GOODLOGFILE
       echo -e "\033[1;32mThat's fast enough.\033[0m"
-      rm $STSFILE
+      if [ -f $STSFILE ]; then
+        rm $STSFILE
+      fi
       exit 0
     fi
 
@@ -208,7 +216,9 @@ if [ ! -z "$VPNROUTE" ]; then
 fi
 
 if [ "$1" == "checkonly" ]; then
-  rm $STSFILE
+  if [ -f $STSFILE ]; then
+    rm $STSFILE
+  fi
   exit 0
 fi
 
