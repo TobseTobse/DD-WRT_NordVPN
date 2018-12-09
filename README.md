@@ -83,7 +83,7 @@ These jobs regularly check your internet connection and take on measurements if 
 
 Now reboot the router.
 
-When the router is back up use a tool like [WinSCP](https://winscp.net) to upload [the scripts](https://github.com/TobseTobse/DD-WRT_NordVPN/archive/master.zip) to /jffs.
+When the router is back up use a tool like [WinSCP](https://winscp.net) to upload [the scripts](https://github.com/TobseTobse/DD-WRT_NordVPN/archive/master.zip) to /jffs or simply put the USB stick into your desktop computer or notebook and copy the files the the stick's root directory.
 Use a tool like [PuTTY](http://www.putty.org) and connect to your router.
 Now let's make the scripts executable:
 
@@ -93,10 +93,10 @@ chmod ugo+x *
 ```
 
 Now let's define an initial VPN server to connect to. In the DD-WRT menu go to _Services > VPN_.
-Pick one of the server configs you would like to connect to per default after the router has booted.
+Pick one of the server configs you would like to connect to per default to after the router has booted.
 You find these files in the serverconfigs directory.
 
-Read the configuration values from the openvpn.conf file. Try to match the fields in the **OpenVPN Client** section of the DD-WRT administration interface as good as possible. In my case the values currently look like this:
+Read the configuration values from the openvpn.conf file in the server directory you have chosen. Try to match the fields in the **OpenVPN Client** section of the DD-WRT administration interface as good as possible with the values from the configuration file. In my case the values look about like this:
 
 - Start OpenVPN Client: Enable
 - Server IP/Name: _get the ip address from the "remote" line in openvpn.conf_
@@ -146,18 +146,18 @@ Please do not edit below the "configuration end" line.
 
 ### Usage of the scripts
 
-If you connect to your router via SSH or Telnet you can call the scripts like that:
+If you connect to your router via SSH or Telnet you can use the scripts like that:
 
 `config`
 
-Don't touch this script. It will be overwritten with the next repository checkout. If you need a custom configuration make a copy of this file and name the copy "myconfig".
+Don't touch this script. It will be overwritten with the next repository checkout. If you need a custom local configuration make a copy of this file and name the copy "myconfig".
 
 ```
 cd /jffs/usr/bin
 cp config myconfig
 ```
 
-Then modify the myconfig file. All values in the myconfig file will override the ones from the config file automatically.
+Then modify the myconfig file to your needs. All values in the myconfig file will override the ones from the config file automatically.
 
 `checkcon`
 
@@ -167,44 +167,44 @@ By default wikipedia.org is pinged 20 times. If there are not enough pongs comin
 `speedcheck`
 
 This script first invokes the _checkcon_ script. If the connection is okay the script proceeds to the following step:
-It downloads a 10 MB test file from a server which is in the same country as the VPN server.
+It downloads a test file from a server which is in the same country as the VPN server you're connected to.
 If the connection speed is below the predefined threshold the script will change the VPN server.
 You can call the script with a parameter: `speedcheck checkonly` doesn't change the VPN server if the measured bandwidth is too low.
 
 `vpn {server shortcut}`
 
 This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca0006tcp` or `vpn nl0053udp`).
-When you call the script with `vpn rnd` it will switch to a randomly selected VPN server from the list in the serverconfigs directory.
+When you call the script with `vpn rnd` it will switch to a randomly selected VPN server from the list in the serverconfigs directory, respecting the rules defined in the configuration to either only connect to a server from a list of desired countries or to avoid connections to a server from a list of specified countries (this is default).
 
 
 ### Updating the server configuration files
 
-It may happen that one day NordVPN will change (add, remove, modify) servers. Unfortunately, there is no easy way to handle this yet.
+It happens regularly that NordVPN changes (adds, removes, modifies) the list of servers they provide. Unfortunately, there is no easy way to handle this yet.
 If you want to convert the OpenVPN files yourself you can download the ".upd1194.ovpn" files from https://nordvpn.com/ovpn and parse them with [PHP](https://secure.php.net). If you want to run PHP on your Windows machine you can use a framework like [XAMPP](https://www.apachefriends.org) or give it to someone who has a webserver running PHP. Put the ".upd1194.ovpn" files together with *make_serverconfig.php* into a directory and run it with
 
 `php make_serverconfig.php`
 
-If this is too much hassle for you just check on [the DD-WRT NordVPN project site](https://tobsetobse.github.io/DD-WRT_NordVPN) occasionally. I will try to keep the server configuration files a bit up-to-date but I won't include servers from US, UK and DE. Deal with it 8-)
+If this is too much hassle for you just check on [the DD-WRT NordVPN project site](https://tobsetobse.github.io/DD-WRT_NordVPN) occasionally. I will try to keep the server configuration files a bit up-to-date but I won't include servers from a list of countries I personally consider untrustworthy. Deal with it 8-)
 
 
-### WTF...? I found new files in the /jffs directory
+### WTF...? I found new files in the /jffs directory which I haven't copied there!
 
 Breathe. It's all good. The VPN scripts write the following files into /jffs:
 - *servers.good.log*: a log with measured connection speeds of servers above the configured speed threshold
 - *servers.bad.log*: a log with measured connection speeds of servers below the configured speed threshold
 - *speedtestservers.xml*: this file contains servers via which the connection speed can be measured
-- *tmp*: this directory mainly contains lock files. The scripts need them to avoid parallel script execution or boot loops.
+- *tmp*: this directory mainly contains lock files. The scripts need them to avoid parallel script executions or boot loops.
 
 
 ### Why do the scripts make use of this weird app-1540758312.000webhostapp.com URL?
 
-Yes, that's a good question. The problem lays in the limited capability of DD-WRT's built-in wget command. To keep the firmware as slim as possible the DD-WRT devs didn't implement the possibility to fetch HTTPS URLs with this command - it only understands HTTP. Unfortunately, both ipinfo.io and github.com have followed Google's call to switch to HTTPS and made HTTP URLs unavailable for our wget. To keep the scripts working I have placed some one-line PHP scripts at this free hoster to proxy the requests our routers make to ipinfo.io and github.com. If you don't feel safe with this solution you can host these scripts at your own webserver, of course. In this case simply upload the scripts in the php directory to your server and add the IPINFOURL and HTTPSPROXYURL to *myconfig*.
+Yes, that's a good question. The problem lays in the limited capability of DD-WRT's built-in wget command. To keep the firmware as slim as possible the DD-WRT devs didn't implement the possibility to fetch HTTPS URLs with this command - it only understands HTTP. Unfortunately, both ipinfo.io and github.com have followed Google's call to switch to HTTPS and made HTTP URLs unavailable for our version of wget. To keep the scripts working I have placed some one-line PHP scripts at this free hoster to proxy the requests our routers make to ipinfo.io and github.com (you find these PHP files in the php directory of this release). If you don't feel safe with this solution you can host these PHP scripts at your own webserver, of course. In this case simply upload the scripts in the php directory to your server and add the IPINFOURL and HTTPSPROXYURL to your *myconfig*.
 
 
 ### Troubleshooting
 
 - Try removing the kill switch we have added as firewall script. Open a website with a browser being connected to the DD-WRT router. Do you get a result? Then your hardware setup and routing is fine. No result? Dang! Try a different version of DD-WRT. DD-WRT releases are pretty buggy sometimes.
-- Assuming your hardware setup and routing are fine you can put back the kill switch now. Now navigate in the DD-WRT menu to Administration > Commands (Diagnostics) and enter the following command into the "Commands" box: `cat /tmp/openvpncl/openvpn.log` and click on the button "Run Commands" below. Does this help you any further? No? Then ask Google or a friend who knows a bit more about OpenVPN.
+- Assuming your hardware setup and routing are fine you can put back the kill switch now. Now navigate to Administration > Commands (Diagnostics) in the DD-WRT menu and enter the following command into the "Commands" box: `cat /tmp/openvpncl/openvpn.log` and click on the button "Run Commands" below. Does this help you any further? No? Then ask Google or a friend who knows a bit more about OpenVPN.
 
 
 ### License
