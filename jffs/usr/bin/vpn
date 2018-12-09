@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v4.06                                         #
+#   VPN connector script v4.07                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -338,6 +338,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   let RETRIESDONE=$RETRIESDONE+1
 done
 
+sleep $REBOOTWAIT
 NOWSTAMP=`date +%s`
 rm $LTRFILE
 echo $NOWSTAMP >> $LTRFILE

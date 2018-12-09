@@ -35,6 +35,10 @@ GENERALLOG=$JFFSPATH/logs/general.log
 # default: $JFFSPATH/tmp
 MYTMPDIR=$JFFSPATH/tmp
 
+# wait this amount of seconds before executing a reboot
+# default: 60
+REBOOTWAIT=60
+
 
 ########################################################################
 ##                                                                    ##
