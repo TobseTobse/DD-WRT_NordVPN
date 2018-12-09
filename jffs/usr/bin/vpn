@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v4.05                                         #
+#   VPN connector script v4.06                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -16,7 +16,7 @@
 #                                                                      #
 ########################################################################
 
-# load config
+# load confi
 DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
 source $DIRNAME/config
 if [ -f "$DIRNAME/myconfig" ]; then
@@ -28,6 +28,11 @@ fi
 if [ "$LOGGING" == "yes" ]; then
   NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
   echo $NOWSTAMP vpn script called >> $GENERALLOG
+fi
+
+# create temporary directory if it doesn't exist yet
+if [ ! -d "$MYTMPDIR" ]; then
+  mkdir $MYTMPDIR
 fi
 
 # check if another instance of the vpn script is running already
@@ -65,6 +70,7 @@ if [ "$PARAM1" == "" ]; then
   echo Please use a server directory as parameter from the following list:
   ls $CONFIGFILESDIR
   echo If you\'re not sure which one to pick, just use "rnd" to pick a random server
+  rm $VPNLOCKFILE
   exit 1
 fi
 
@@ -72,6 +78,7 @@ fi
 if [ "$PARAM1" != "rnd" ]; then
   if [ ! -d "$CONFIGFILESDIR/$PARAM1/" ]; then
     echo -e "\033[1;31mDirectory $CONFIGFILESDIR/$PARAM1/ doesn't exist.\033[0m"
+    rm $VPNLOCKFILE
     exit 1
   fi
 fi
@@ -325,10 +332,14 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     echo -e "Our end service provider is $ISP.\033[0m"
     RETRIESDONE=$MAXTRIES
     $SPEEDTESTSCRIPT
+    rm $VPNLOCKFILE
     exit
   fi
   let RETRIESDONE=$RETRIESDONE+1
 done
 
+NOWSTAMP=`date +%s`
+rm $LTRFILE
+echo $NOWSTAMP >> $LTRFILE
 echo Rebooting router.
 reboot

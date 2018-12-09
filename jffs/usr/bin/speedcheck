@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v2.06                                       #
+#   VPN speed check script v2.07                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -25,6 +25,11 @@ fi
 if [ "$LOGGING" == "yes" ]; then
   NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
   echo $NOWSTAMP speedcheck script called >> $GENERALLOG
+fi
+
+# create temporary directory if it doesn't exist yet
+if [ ! -d "$MYTMPDIR" ]; then
+  mkdir $MYTMPDIR
 fi
 
 # kill all vpn connection scripts
@@ -174,6 +179,7 @@ if [ ! -z "$VPNROUTE" ]; then
 
   if [ "$MEASUREDSPEED" == "" ]; then
     echo -e "\033[1;31mCouldn't measure speed.\033[0m"
+    rm $STSFILE
     exit 0
   else
     echo -e "\033[1;37mThe download took $TOTALSECONDS seconds."
@@ -189,6 +195,7 @@ if [ ! -z "$VPNROUTE" ]; then
       # log good speed to file
       echo $NOWSTAMP $CURRENTSERVER: $MEASUREDSPEED Mbit/s >> $GOODLOGFILE
       echo -e "\033[1;32mThat's fast enough.\033[0m"
+      rm $STSFILE
       exit 0
     fi
 
@@ -201,6 +208,7 @@ if [ ! -z "$VPNROUTE" ]; then
 fi
 
 if [ "$1" == "checkonly" ]; then
+  rm $STSFILE
   exit 0
 fi
 

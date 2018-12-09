@@ -31,6 +31,10 @@ JFFSPATH=/jffs
 LOGGING=no
 GENERALLOG=$JFFSPATH/logs/general.log
 
+# temporary directory for lock files etc
+# default: $JFFSPATH/tmp
+MYTMPDIR=$JFFSPATH/tmp
+
 
 ########################################################################
 ##                                                                    ##
@@ -118,8 +122,8 @@ IPINFOURL=http://app-1540758312.000webhostapp.com
 COUNTRYNAMESJSONURL=http://country.io/names.json
 
 # path to lock file
-# default: $JFFSPATH/tmp/vpn.lock
-VPNLOCKFILE=$JFFSPATH/tmp/vpn.lock
+# default: $MYTMPDIR/vpn.lock
+VPNLOCKFILE=$MYTMPDIR/vpn.lock
 
 ########################################################################
 ##                                                                    ##
@@ -165,11 +169,11 @@ BADLOGFILE=$JFFSPATH/logs/servers.bad.log
 
 # path to speedcheck started time file
 # default: $JFFSPATH/ststarted
-STSFILE=$JFFSPATH/tmp/ststarted.lock
+STSFILE=$MYTMPDIR/ststarted.lock
 
 # path to last time rebooted file
-# default: $JFFSPATH/tmp/lastreboot
-LTRFILE=$JFFSPATH/tmp/lastreboot.lock
+# default: $MYTMPDIR/lastreboot
+LTRFILE=$MYTMPDIR/lastreboot.lock
 
 # URL for speed test servers in XML format
 # default: http://c.speedtest.net/speedtest-servers-static.php
