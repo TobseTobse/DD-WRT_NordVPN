@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Startup script v1.03                                               #
+#   Startup script v1.04                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2018                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -37,4 +37,4 @@ if [ -f "$STSFILE" ]; then
 fi
 
 # execute speed check
-$JFFSPATH/speedcheck
+$SPEEDTESTSCRIPT
