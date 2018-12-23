@@ -150,14 +150,14 @@ If you connect to your router via SSH or Telnet you can use the scripts like tha
 
 `config`
 
-Don't touch this script. It will be overwritten with the next repository checkout. If you need a custom local configuration make a copy of this file and name the copy "myconfig".
+Don't touch this script. It will be overwritten with the next repository checkout. If you need a custom local configuration make a copy of this file and name the copy "myconfig", like this:
 
 ```
 cd /jffs/usr/bin
 cp config myconfig
 ```
 
-Then modify the myconfig file to your needs. All values in the myconfig file will override the ones from the config file automatically.
+Then modify the `myconfig` file to your needs. The script collection always includes the `config` file first. Then, if existent, the `myconfig` will be included. Therefore all values specified in the `myconfig` file will override the ones from the `config` file automatically. If you don't specify a value in the `myconfig` file, it will have the default value from the `config`. So usually the `myconfig` is either not existent or just contains the #!/bin/sh header and a few other lines with settings you would like to override.
 
 `checkcon`
 
