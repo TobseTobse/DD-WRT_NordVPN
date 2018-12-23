@@ -73,6 +73,16 @@ SPEEDTESTSCRIPT=$JFFSPATH/usr/bin/speedcheck
 # path to openVPN log file
 VPNLOG=/tmp/openvpncl/openvpn.log
 
+# check maximum server load (yes or no)
+# (this setting is considered experimental)
+# default: no
+CHECKMAXLOAD=no
+
+# for random servers try to stay below this server load in percent
+# (this only applies if USEMAXLOAD is set to "yes")
+# default: 50
+MAXLOAD=50
+
 # maximum execution time of VPN script in seconds
 # default: 600
 MAXVPNEXECTIME=600

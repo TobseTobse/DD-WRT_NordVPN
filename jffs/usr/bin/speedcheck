@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v2.10                                       #
+#   VPN speed check script v2.12                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -89,8 +89,8 @@ if [ ! -z "$VPNROUTE" ]; then
     # do some string acrobatics to calculate connection speed...
     MEASUREDSPEED=""
     REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
-    MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
-    SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
+    MINUTES=`echo $REALTIME | grep -E -o '([0-9\.])+?m'`
+    SECONDS=`echo $REALTIME | grep -E -o '([0-9\.])+?s'`
     TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
     TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
     if [ ${TOTALSECONDS%.*} -gt 0 ]; then
@@ -110,7 +110,7 @@ if [ ! -z "$VPNROUTE" ]; then
       LASTUPDATED=0
     fi
     DIFFSECONDS=$(($NOW-$LASTUPDATED))
-  if [ ! -f "$XMLFILE" ]; then
+    if [ ! -f "$XMLFILE" ]; then
       echo Creating speedtest servers list.
       LASTUPDATED=0
     fi
@@ -190,8 +190,8 @@ if [ ! -z "$VPNROUTE" ]; then
     fi
     exit 0
   else
-    echo -e "\033[1;37mThe download took $TOTALSECONDS seconds."
-    echo -e "This equals a speed of $MEASUREDSPEED Mbit/s.\033[0m"
+    echo The download took $TOTALSECONDS seconds.
+    echo -e "\033[1;37mThis equals a speed of $MEASUREDSPEED Mbit/s.\033[0m"
 
     # prepare logging
     CURRENTSERVER=`cat $CURRENTSERVERFILE`

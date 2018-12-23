@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v1.09                                                #
+#   Update script v1.08                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -30,8 +30,6 @@ echo Updating checkcon script...
 wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/checkcon -O $DIRNAME/checkcon
 echo Updating speedcheck script...
 wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/speedcheck -O $DIRNAME/speedcheck
-echo Updating startup script...
-wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/startup -O $DIRNAME/startup
 echo Updating vpn script...
 wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/vpn -O $DIRNAME/vpn
 echo Updating update script...

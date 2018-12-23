@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v4.09                                         #
+#   VPN connector script v5.01                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -60,9 +60,6 @@ if [ "$RESULT" == "" ]; then
   CURLSUPPORTED=no
 fi
 
-# kill all speedcheck scripts
-killall -q speedcheck
-
 # get command line parameter
 PARAM1="$1"
 
@@ -89,12 +86,23 @@ if [ "$PARAM1" != "rnd" ]; then
   fi
 fi
 
-# read servers list outside of loop
+# kill all speedcheck scripts
+killall -q speedcheck
+
+# read local servers list outside of loop
 if [ "$1" == "rnd" ]; then
-  echo Reading servers list...
+  echo Reading locally stored servers list...
   SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
   NRDIRS=`ls $CONFIGFILESDIR | wc -l`
   echo Got $NRDIRS potential servers to connect to.
+fi
+
+# read NordVPN servers list (realtime data)
+# if we're already connected to the VPN
+SERVERSJSON=
+VPNROUTE=`route -n | grep $VPNINTERFACE`
+if [ "$VPNROUTE" != "" ]; then
+  SERVERSJSON=`wget -t 3 -T 10 -q -O - $IPINFOURL/serverlist`
 fi
 
 RETRIESDONE=0
@@ -116,7 +124,14 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     # and not in exclusive countries list
     EXCLUDECOUNTRIES=$(echo $IGNORECOUNTRIES | tr "," "\n")
     INCLUDECOUNTRIES=$(echo $EXCLUSIVECOUNTRIES | tr "," "\n")
+
     while : ; do
+
+      # initialize loop
+      WRONGPROTOCOL=no
+      WRONGCOUNTRY=no
+      CORRECTCOUNTRY=no
+      LOADISOKAY=yes
 
       # generate random number
       # between 1 and amount of server directories
@@ -134,31 +149,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
         fi
       done
 
-      # check if selected server is in a to be excluded country
-      WRONGCOUNTRY=no
-      for i in $EXCLUDECOUNTRIES
-      do
-        if [ -z "${PARAM1##*$i*}" ]; then
-          WRONGCOUNTRY=yes
-          break
-        fi
-      done
-
-      # check if selected server is in an exclusive country
-      CORRECTCOUNTRY=yes
-      if [ ${#INCLUDECOUNTRIES[@]} -gt 0 ]; then
-        CORRECTCOUNTRY=no
-        for i in $INCLUDECOUNTRIES
-        do
-          if [ -z "${PARAM1##*$i*}" ]; then
-            CORRECTCOUNTRY=yes
-            break
-          fi
-        done
-      fi
-
       # check if selected server matches force protocol config
-      WRONGPROTOCOL=no
       if [ "$FORCEPROTOCOL" != "" ]; then
         WRONGPROTOCOL=yes
         if [ -z "${PARAM1##*$FORCEPROTOCOL*}" ]; then
@@ -166,8 +157,82 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
         fi
       fi
 
-      [[ "$WRONGCOUNTRY" == "yes" || "$CORRECTCOUNTRY" == "no" || "$WRONGPROTOCOL" == "yes" ]] || break
+      # check if selected server is in a to be excluded country
+      if [ "$WRONGPROTOCOL" == "no" ]; then
+        for i in $EXCLUDECOUNTRIES
+        do
+          if [ -z "${PARAM1##*$i*}" ]; then
+            WRONGCOUNTRY=yes
+            break
+          fi
+        done
+
+        # check if selected server is in an exclusive country
+        if [ "$WRONGCOUNTRY" == "no" ]; then
+          if [ ${#INCLUDECOUNTRIES[@]} -gt 0 ]; then
+            for i in $INCLUDECOUNTRIES
+            do
+              if [ -z "${PARAM1##*$i*}" ]; then
+                CORRECTCOUNTRY=yes
+                break
+              fi
+            done
+          fi
+
+          # parse NordVPN servers list with PHP
+          # and find current exit node
+          SERVERINFO=
+          if [ "$CHECKMAXLOAD" == "yes" ] && [ "$CORRECTCOUNTRY" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
+            TOPARSER="$SERVER|$SERVERSJSON"
+            SERVERINFO=`echo $TOPARSER|php -nr '
+              $input = explode("|", fgets(STDIN));
+              $regex = "%^([a-z]+?)(\d+?)(tcp|udp)$%";
+              $exitnode = preg_replace_callback($regex,
+               function($hits) {
+                 return $hits[1] . (int)$hits[2];
+               }, $input[0]);
+              $servers = json_decode($input[1]);
+              if (!is_array($servers)) exit;
+              foreach ($servers as $server) {
+                $regex = "%^" . $exitnode . "\.nordvpn\.com$%";
+                if (preg_match($regex, trim($server->domain))) {
+                  $features = (array)$server->features;
+                  if (is_array($features)) {
+                    foreach ($features as $key => $feature) {
+                      if (trim ($feature) == "") {
+                        unset($features[$key]);
+                      }
+                    }
+                  }
+                  $features = implode(", ", array_keys($features));
+                  $features = str_replace("_", " ", $features);
+                  echo "Full name: " . $server->name . "\n"
+                     . "Latitude: "  . $server->location->lat . "\n"
+                     . "Longitude: " . $server->location->long . "\n"
+                     . "Load: "      . $server->load . "\n"
+                     . "Features: "  . $features;
+                  exit;
+                }
+              }'`
+            if [ "$SERVERINFO" != "" ]; then
+              SERVERLOAD=`echo $SERVERINFO | grep -E -o 'Load: ([0-9]+)'`
+              COMPARISON=`echo | awk -v sl=$SERVERLOAD -v ma=$MAXLOAD '{if (sl>ma) printf ("greater"); else printf ("smaller");}'`
+              if [ "$COMPARISON" == "greater" ]; then
+                LOADISOKAY=no
+              fi
+            fi
+          fi
+        fi
+      fi
+    [[ "$WRONGCOUNTRY" == "yes" || "$CORRECTCOUNTRY" == "no" || "$WRONGPROTOCOL" == "yes" || "$LOADISOKAY" == "no" ]] || break
     done
+  fi
+
+  # show server information to user
+  if [ "$CHECKMAXLOAD" == "yes" ] && [ "$SERVERINFO" != "" ]; then
+    echo
+    echo -e "\033[1;32mServer $SERVER fullfills maximum load rule."
+    echo -e "$SERVERINFO\033[0m"
   fi
 
   # init
