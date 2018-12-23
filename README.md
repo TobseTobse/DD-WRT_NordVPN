@@ -63,7 +63,7 @@ iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
 
 Save this as **Firewall** with the button below.
 
-This is a [kill switch](https://en.wikipedia.org/wiki/Internet_kill_switch). I highly recommend doing this.
+This is a [kill switch](https://en.wikipedia.org/wiki/Internet_kill_switch). We highly recommend doing this.
 With these rules you prevent the router from letting devices in the intranet access the internet if the VPN connection is down.
 
 In the DD-WRT menu navigate to _Services_ and enable SSHd. We will need this to connect to the router later.
@@ -139,7 +139,7 @@ Now check your IP at https://ipinfo.io. Does this look any familiar? No? Good, t
 ### Tweaking the script configurations
 
 Usually, the scripts should work without any intervention from your side. The core of the scripts is in /jffs/usr/bin.
-You can tweak these scripts if you urgently feel the need to do so. In all other cases I recommend to refrain from doing that.
+You can tweak these scripts if you urgently feel the need to do so. In all other cases we recommend to refrain from doing that.
 When you edit the scripts you will be able to change a few values in their respective head sections.
 Please do not edit below the "configuration end" line.
 
@@ -157,7 +157,7 @@ cd /jffs/usr/bin
 cp config myconfig
 ```
 
-Then modify the `myconfig` file to your needs. The script collection always includes the `config` file first. Then, if existent, the `myconfig` will be included. Therefore all values specified in the `myconfig` file will override the ones from the `config` file automatically. If you don't specify a value in the `myconfig` file, it will have the default value from the `config`. So usually the `myconfig` is either not existent or just contains the #!/bin/sh header and a few other lines with settings you would like to override.
+Then modify the _myconfig_ file to your needs. The script collection always includes the _config_ file first. Then, if existent, the _myconfig_ will be included. Therefore all values specified in the _myconfig_ file will override the ones from the _config_ file automatically. If you don't specify a value in the _myconfig_ file, it will have the default value from the _config_. So usually the _myconfig_ is either not existent or just contains the `#!/bin/sh` header and a few other lines with settings you would like to override.
 
 `checkcon`
 
@@ -184,7 +184,7 @@ If you want to convert the OpenVPN files yourself you can download the ".upd1194
 
 `php make_serverconfig.php`
 
-If this is too much hassle for you just check on [the DD-WRT NordVPN project site](https://tobsetobse.github.io/DD-WRT_NordVPN) occasionally. I will try to keep the server configuration files a bit up-to-date but I won't include servers from a list of countries I personally consider untrustworthy. Deal with it 8-)
+If this is too much hassle for you just check on [the DD-WRT NordVPN project site](https://tobsetobse.github.io/DD-WRT_NordVPN) occasionally. We will try to keep the server configuration files a bit up-to-date but we won't include servers from a list of countries we personally consider untrustworthy. Deal with it 8-)
 
 
 ### WTF...? I found new files in the /jffs directory which I haven't copied there!
@@ -198,13 +198,24 @@ Breathe. It's all good. The VPN scripts write the following files into /jffs:
 
 ### Why do the scripts make use of this weird app-1540758312.000webhostapp.com URL?
 
-Yes, that's a good question. The problem lays in the limited capability of DD-WRT's built-in wget command. To keep the firmware as slim as possible the DD-WRT devs didn't implement the possibility to fetch HTTPS URLs with this command - it only understands HTTP. Unfortunately, both ipinfo.io and github.com have followed Google's call to switch to HTTPS and made HTTP URLs unavailable for our version of wget. To keep the scripts working I have placed some one-line PHP scripts at this free hoster to proxy the requests our routers make to ipinfo.io and github.com (you find these PHP files in the php directory of this release). If you don't feel safe with this solution you can host these PHP scripts at your own webserver, of course. In this case simply upload the scripts in the php directory to your server and add the IPINFOURL and HTTPSPROXYURL to your *myconfig*.
+Yes, that's a good question. The problem lays in the limited capability of DD-WRT's built-in wget command. To keep the firmware as slim as possible the DD-WRT devs didn't implement the possibility to fetch HTTPS URLs with this command - it only understands HTTP. Unfortunately, both ipinfo.io and github.com have followed Google's call to switch to HTTPS and made HTTP URLs unavailable for our version of wget. To keep the scripts working We have placed some one-line PHP scripts at this free hoster to proxy the requests our routers make to ipinfo.io and github.com (you find these PHP files in the php directory of this release). If you don't feel safe with this solution you can host these PHP scripts at your own webserver, of course. In this case simply upload the scripts in the php directory to your server and add the IPINFOURL and HTTPSPROXYURL to your *myconfig*.
 
 
 ### Troubleshooting
 
 - Try removing the kill switch we have added as firewall script. Open a website with a browser being connected to the DD-WRT router. Do you get a result? Then your hardware setup and routing is fine. No result? Dang! Try a different version of DD-WRT. DD-WRT releases are pretty buggy sometimes.
 - Assuming your hardware setup and routing are fine you can put back the kill switch now. Now navigate to Administration > Commands (Diagnostics) in the DD-WRT menu and enter the following command into the "Commands" box: `cat /tmp/openvpncl/openvpn.log` and click on the button "Run Commands" below. Does this help you any further? No? Then ask Google or a friend who knows a bit more about OpenVPN.
+
+
+### tl;dr ###
+
+Yes, we understand. It's a lot of text to read. So here comes the short version for all impatient users:
+
+- Flash [DD-WRT](https://dd-wrt.com) to your router
+- Download the [master ZIP](https://github.com/TobseTobse/DD-WRT_NordVPN/archive/master.zip), extract it to a USB stick and put the stick into your DD-WRT router
+- Login to [http://{your router ip}/admin](http://192.168.0.1/admin), copy the contents of the [Configuring DD-WRT to use our scripts](https://tobsetobse.github.io/DD-WRT_NordVPN#configuring-dd-wrt-to-use-our-scripts) text blocks to the respective fields and reboot your router
+
+That's it. Have fun!
 
 
 ### License
