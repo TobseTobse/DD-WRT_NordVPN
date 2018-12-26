@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v5.01                                         #
+#   VPN connector script v5.02                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -130,7 +130,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       # initialize loop
       WRONGPROTOCOL=no
       WRONGCOUNTRY=no
-      CORRECTCOUNTRY=no
+      CORRECTCOUNTRY=yes
       LOADISOKAY=yes
 
       # generate random number
@@ -169,7 +169,8 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
 
         # check if selected server is in an exclusive country
         if [ "$WRONGCOUNTRY" == "no" ]; then
-          if [ ${#INCLUDECOUNTRIES[@]} -gt 0 ]; then
+          if [ [[ -z "${EXCLUSIVECOUNTRIES// }" ]] ]; then
+            CORRECTCOUNTRY=no
             for i in $INCLUDECOUNTRIES
             do
               if [ -z "${PARAM1##*$i*}" ]; then

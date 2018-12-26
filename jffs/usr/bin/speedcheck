@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v2.12                                       #
+#   VPN speed check script v2.13                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -52,7 +52,6 @@ if [ ! -z "$VPNROUTE" ]; then
   # last reboot was more than ... seconds ago
   NOWSTAMP=`date +%s`
   if [ -f $STSFILE ]; then
-    rm $STSFILE
     LASTSTART=`cat $STSFILE`
     LSPTAGO=`expr $NOWSTAMP - $LASTSTART`
     echo -e "\033[1;31mLast speed check started $LSPTAGO seconds ago and is still running.\033[0m"
