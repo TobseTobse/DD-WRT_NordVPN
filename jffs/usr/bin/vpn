@@ -169,7 +169,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
 
         # check if selected server is in an exclusive country
         if [ "$WRONGCOUNTRY" == "no" ]; then
-          if [ [[ -z "${EXCLUSIVECOUNTRIES// }" ]] ]; then
+          if [ "$EXCLUSIVECOUNTRIES" != "" ]; then
             CORRECTCOUNTRY=no
             for i in $INCLUDECOUNTRIES
             do
