@@ -262,7 +262,8 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     CNT=0
     while [ $CNT -le $DROPTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
     do
-      killall -q openvpn
+      #killall -q openvpn
+      for pid in $(ps | grep openvpncl | head -n-1 | awk '{print $1}'); do kill -9 $pid; done
       sleep 1
       let CNT=$CNT+1
       printf "."
