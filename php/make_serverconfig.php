@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Serverconfig conversion script v5.01                               #
+#   Serverconfig conversion script v5.02                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script converts NordVPN OpenVPN files in the ovpn directory   #
@@ -47,7 +47,6 @@ shuffle($hits);
 $cnt = 0;
 $downloaded = array();
 foreach ($hits as $hit) {
-  $cnt++;
   $url = str_replace('"', "", $hit);
   $hitParts = explode("/", $url);
   $filename = preg_replace("%\.nordvpn\.com%", "",
@@ -78,11 +77,13 @@ foreach ($hits as $hit) {
    || file_exists("ovpn/" . $filename)) continue;
 
   // download ovpn file
-  file_put_contents("ovpn/" . $filename, file_get_contents($url));
-  out("Downloaded server config " . $filename . " ("
-    . sprintf("%0.2f", 100/count($hits)*$cnt) . "%).");
-  foreach ($spHits[0] as $downloadedCountry) {
-    $downloaded[$downloadedCountry]++;
+  if ($ovpn = @file_get_contents($url)) {
+    file_put_contents("ovpn/" . $filename, $ovpn);
+    out("Downloaded server config " . $filename . " ("
+      . sprintf("%0.2f", 100/count($hits)*++$cnt) . "%).");
+    foreach ($spHits[0] as $downloadedCountry) {
+      $downloaded[$downloadedCountry]++;
+    }
   }
 }
 

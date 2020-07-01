@@ -129,7 +129,8 @@ IPADDRESSURL=http://icanhazip.com
 # change this value to your address. The following scripts are expected
 # at this site, forwarding ipinfo.io requests:
 # city, country, ip, org, region
-IPINFOURL=http://app-1540758312.000webhostapp.com
+# default: http://dd-wrt.atwebpages.com
+IPINFOURL=http://dd-wrt.atwebpages.com
 
 # country names JSON URL
 # default: http://country.io/names.json
@@ -232,5 +233,5 @@ MAXFAILS=5
 GITHUBURL=https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
 
 # HTTPS to HTTP proxy URL
-# default: http://app-1540758312.000webhostapp.com?url=
-HTTPSPROXYURL=http://app-1540758312.000webhostapp.com/proxy?url=
+# default: http://dd-wrt.atwebpages.com/proxy?url=
+HTTPSPROXYURL=http://dd-wrt.atwebpages.com/proxy?url=
