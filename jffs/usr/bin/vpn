@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v5.02                                         #
+#   VPN connector script v5.04                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -102,7 +102,11 @@ fi
 SERVERSJSON=
 VPNROUTE=`route -n | grep $VPNINTERFACE`
 if [ "$VPNROUTE" != "" ]; then
-  SERVERSJSON=`wget -t 3 -T 10 -q -O - $IPINFOURL/serverlist`
+  if [ "$CURLSUPPORTED" == "yes" ]; then
+    SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
+  else
+    SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
+  fi
 fi
 
 RETRIESDONE=0
@@ -327,7 +331,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
         # flush DNS and get new public IPv4
         stopservice dnsmasq
         startservice dnsmasq
-        NEWIP=`wget -t 3 -T 10 -q -O - $IPADDRESSURL`
+        NEWIP=`wget -t 5 -T 10 -q -O - $IPADDRESSURL`
       fi
     fi
     NOW=`date +%s`

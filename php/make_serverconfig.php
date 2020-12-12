@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Serverconfig conversion script v5.02                               #
+#   Serverconfig conversion script v5.03                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script converts NordVPN OpenVPN files in the ovpn directory   #
@@ -68,7 +68,7 @@ foreach ($hits as $hit) {
     if (!array_key_exists($checkCountry, $downloaded)) {
       $downloaded[$checkCountry] = 0;
     }
-    if (count($downloaded[$checkCountry]) > $maxPerCountry) {
+    if ($downloaded[$checkCountry] > $maxPerCountry) {
       $ignore = true;
       break;
     }

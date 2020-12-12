@@ -121,16 +121,32 @@ FORCEPROTOCOL=
 DEADLOGFILE=$JFFSPATH/logs/servers.dead.log
 
 # http-URL (mind: NOT https-URL!) to determine public IP address
-# default: http://icanhazip.com
-IPADDRESSURL=http://icanhazip.com
+# alternatives could be:
+# * http://api.ipify.org
+# * http://checkip.amazonaws.com
+# * http://ip.tyk.nu
+# * http://whatismyip.akamai.com
+# * http://tnx.nl/ip
+# * http://l2.io/ip
+# * http://ident.me
+# * http://wgetip.com
+# * http://bot.whatismyipaddress.com
+# * http://eth0.me
+# * http://ifconfig.me/ip
+# default: http://147.75.47.199 (this is icanhazip.com)
+IPADDRESSURL=http://147.75.47.199
 
 # custom ipinfo.io URL (because of wget HTTPS insufficiency)
 # if you want to host the ipinfo proxy scripts yourself please
 # change this value to your address. The following scripts are expected
 # at this site, forwarding ipinfo.io requests:
 # city, country, ip, org, region
-# default: http://dd-wrt.atwebpages.com
-IPINFOURL=http://dd-wrt.atwebpages.com
+# default: https://ipinfo.io
+IPINFOURL=https://ipinfo.io
+
+# proxy or real URL for NordVPN servers
+# default: https://api.nordvpn.com/server
+SERVERLISTURL=https://api.nordvpn.com/server
 
 # country names JSON URL
 # default: http://country.io/names.json
