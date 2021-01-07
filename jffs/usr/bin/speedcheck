@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v3.01                                       #
+#   VPN speed check script v3.02                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, m.00ounted on /jffs and   #
@@ -163,9 +163,9 @@ if [ ! -z "$VPNROUTE" ]; then
 
       echo Testing against $SPEEDSERVER.
 
-      # download 1000x1000px random image to measure the time it took
-      FACTOR=1000
-      FILESIZE=1986284
+      # download 2000x2000px random image to measure the time it took
+      FACTOR=2000
+      FILESIZE=7907740
       TIMEOUT=$(awk "BEGIN {printf \"%.0f\",${FILESIZE}/${MINIMUMSPEED}/1024/1024*8*2}")
       echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
       RESULT=`time curl -ks -o /dev/null -m 120 $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
@@ -176,34 +176,13 @@ if [ ! -z "$VPNROUTE" ]; then
       MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
       SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
       TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+      TOOSLOW=1
       if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
         MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
         TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
         let MEASUREMENTS=$MEASUREMENTS+1
         echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
-      fi
-
-      # download 2000x2000px random image to measure the time it took
-      COMPARISON=`echo | awk -v me=$MEASUREDSPEED -v mi=$MINIMUMSPEED '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
-      if [ "$COMPARISON" == "greater" ]; then
-        FACTOR=2000
-        FILESIZE=7907740
-        TIMEOUT=$(awk "BEGIN {printf \"%.0f\",${FILESIZE}/${MINIMUMSPEED}/1024/1024*8*2}")
-        echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
-        RESULT=`time curl -ks -o /dev/null -m 120 $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
-
-        # do string acrobatics to calculate connection speed...
-        MEASUREDSPEED=""
-        REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
-        MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
-        SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
-        TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-        if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
-          MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
-          TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
-          let MEASUREMENTS=$MEASUREMENTS+1
-          echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
-        fi
+        TOOSLOW=0
       fi
 
       # download 4000x4000px random image to measure the time it took
@@ -221,11 +200,13 @@ if [ ! -z "$VPNROUTE" ]; then
         MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
         SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
         TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+        TOOSLOW=1
         if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
           MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
           TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
           let MEASUREMENTS=$MEASUREMENTS+1
           echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
+          TOOSLOW=0
         fi
       fi
 
@@ -244,11 +225,13 @@ if [ ! -z "$VPNROUTE" ]; then
         MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
         SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
         TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+        TOOSLOW=1
         if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
           MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
           TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
           let MEASUREMENTS=$MEASUREMENTS+1
           echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
+          TOOSLOW=0
         fi
       fi
 
@@ -269,28 +252,30 @@ if [ ! -z "$VPNROUTE" ]; then
   else
 
     AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/${MEASUREMENTS}}")
-    echo -e "\033[1;37mThis equals an average speed of $AVERAGESPEED Mbit/s.\033[0m"
+    if [ "$TOOSLOW" -eq 0 ]; then
+      echo -e "\033[1;37mThis equals an average speed of $AVERAGESPEED Mbit/s.\033[0m"
 
-    # prepare logging
-    CURRENTSERVER=`cat $CURRENTSERVERFILE`
-    NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
+      # prepare logging
+      CURRENTSERVER=`cat $CURRENTSERVERFILE`
+      NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
 
-    # exit script if measured speed > minimum speed
-    COMPARISON=`echo | awk -v me=$MEASUREDSPEED -v mi=$MINIMUMSPEED '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
-    if [ "$COMPARISON" == "greater" ]; then
-      # log good speed to file
-      echo $NOWSTAMP $CURRENTSERVER: $MEASUREDSPEED Mbit/s >> $GOODLOGFILE
-      echo -e "\033[1;32mThat's fast enough.\033[0m"
-      if [ -f $STSFILE ]; then
-        rm $STSFILE
+      # exit script if measured speed > minimum speed
+      COMPARISON=`echo | awk -v me=$AVERAGESPEED -v mi=$MINIMUMSPEED '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
+      if [ "$COMPARISON" == "greater" ]; then
+        # log good speed to file
+        echo $NOWSTAMP $CURRENTSERVER: $AVERAGESPEED Mbit/s >> $GOODLOGFILE
+        echo -e "\033[1;32mThat's fast enough.\033[0m"
+        if [ -f $STSFILE ]; then
+          rm $STSFILE
+        fi
+        exit 0
       fi
-      exit 0
     fi
 
     # log miserable speed to file
-    echo -e "\033[1;31mThat's less than the configured minimum of $MINIMUMSPEED Mbit/s.\033[0m"
+    echo -e "\033[1;31mThe measured speed is less than the configured minimum of $MINIMUMSPEED Mbit/s.\033[0m"
     if [ -f $CURRENTSERVERFILE ]; then
-      echo $NOWSTAMP $CURRENTSERVER: $MEASUREDSPEED Mbit/s >> $BADLOGFILE
+      echo $NOWSTAMP $CURRENTSERVER: $AVERAGESPEED Mbit/s >> $BADLOGFILE
     fi
   fi
 fi
