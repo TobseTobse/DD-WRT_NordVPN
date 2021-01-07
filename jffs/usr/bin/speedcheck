@@ -2,10 +2,10 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v2.13                                       #
+#   VPN speed check script v3.01                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
-#   This script must be located on a USB stick, mounted on /jffs and   #
+#   This script must be located on a USB stick, m.00ounted on /jffs and   #
 #   expects the presence of /jffs/usr/bin/vpn. All scripts must be     #
 #   "chmod ugo+x" in order to be executable. You might wanna call it   #
 #   by cron similar to that (mind "root" in the following line):       #
@@ -35,7 +35,7 @@ if [ ! -d "$MYTMPDIR" ]; then
 fi
 
 # kill all vpn connection scripts
-killall -q vpn
+for pid in $(ps | awk '/\/vpn/' | head -n-1 | awk '{print $1}'); do kill -9 $pid >/dev/null 2>&1; done
 
 # check if we're connected to the WAN
 if [ "$1" == "checkonly" ]; then
@@ -78,12 +78,16 @@ if [ ! -z "$VPNROUTE" ]; then
     echo Just checking...
   fi
 
+  # initialize varaiables for average speed calculation
+  TOTALSPEED=0
+  MEASUREMENTS=0
+
   # if current country unknown do 10 MB test with softlayer.com
   if [ "$CURRENTCOUNTRYCODE" == "" ]; then
     # download 10 MB .zip to measure the time it took
     echo Testing against speedtest.wdc01.softlayer.com.
     echo Downloading a 10 MB dummy file to measure the download speed.
-    RESULT=`time wget -O /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
+    RESULT=`time curl -ks -o /dev/null -m 120 http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
 
     # do some string acrobatics to calculate connection speed...
     MEASUREDSPEED=""
@@ -92,42 +96,19 @@ if [ ! -z "$VPNROUTE" ]; then
     SECONDS=`echo $REALTIME | grep -E -o '([0-9\.])+?s'`
     TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
     TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-    if [ ${TOTALSECONDS%.*} -gt 0 ]; then
+    if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
       MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",80/${TOTALSECONDS}}")
+      TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+      let MEASUREMENTS=$MEASUREMENTS+1
     fi
 
   # otherwise execute much more performant
   # and precise country based test
   else
 
-    # update speedtest servers XML file if it's older than
-    # XMLUPDATEMINUTES hours (if we can't get the update,
-    # we will probably still have an older version)
-    NOW=`date +%s`
-    LASTUPDATED=`date -r $XMLFILE +%s`
-    if [ "$LASTUPDATED" == "" ]; then
-      LASTUPDATED=0
-    fi
-    DIFFSECONDS=$(($NOW-$LASTUPDATED))
-    if [ ! -f "$XMLFILE" ]; then
-      echo Creating speedtest servers list.
-      LASTUPDATED=0
-    fi
-    XMLUPDATESECONDS=$(($XMLUPDATEMINUTES*60))
-    COMPARISON=`echo | awk -v me=$DIFFSECONDS -v mi=$XMLUPDATESECONDS '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
-    if [ "$COMPARISON" == "greater" ]; then
-      echo Updating speedtest servers list.
-      wget -q $STXMLURL -O $XMLFILE
-    else
-      printf "\033[1;32mSpeed test servers list file is up to date. "
-      printf "It's %d " "$(($DIFFSECONDS/60))"
-      printf minute
-      COMPARISON=`echo | awk -v me=$DIFFSECONDS '{if (me<60 || me>119) printf ("plural"); else printf ("singular") }'`
-      if [ "$COMPARISON" == "plural" ]; then
-        printf s
-      fi
-      echo -e " old.\033[0m"
-    fi
+    # update speedtest servers XML file
+    echo Updating speedtest servers list to get nearby testing servers.
+    curl -m 120 -o $XMLFILE -ks $STXMLURL
 
     # get a random speed server for the current country
     SPEEDSERVER=""
@@ -136,7 +117,7 @@ if [ ! -z "$VPNROUTE" ]; then
     do
 
       # get speed test servers for current country
-      SPEEDSERVERS=$(cat $XMLFILE | awk 'gsub(/ /, "___")' | grep "cc=\"$CURRENTCOUNTRYCODE\"")
+      SPEEDSERVERS=$(cat $XMLFILE | awk 'gsub(/ /, "___")')
 
       # count amount of speed servers in this country
       AMT=0
@@ -160,21 +141,118 @@ if [ ! -z "$VPNROUTE" ]; then
       let CNT=$CNT+1
     done
 
-    # download 4000x4000px random image to measure the time it took
-    echo Testing against $SPEEDSERVER \($CURRENTCOUNTRYCODE\).
-    echo Downloading a 4000x4000px random image to measure the download speed.
-    RESULT=`time wget -O /dev/null $URL/random4000x4000.jpg 2>&1`
+    if [ "$SPEEDSERVER" == "" ]; then
+      # download 10 MB .zip to measure the time it took
+      echo Testing against speedtest.wdc01.softlayer.com.
+      echo Downloading a 10 MB dummy file to measure the download speed.
+      RESULT=`time curl -ks -o /dev/null -m 120 http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
 
-    # do some string acrobatics to calculate connection speed...
-    MEASUREDSPEED=""
-    REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
-    MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
-    SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
-    TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-    if [ ${TOTALSECONDS%.*} -gt 0 ]; then
-      MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",((31625365/1024/1024)*8)/${TOTALSECONDS}}")
+      # do some string acrobatics to calculate connection speed...
+      MEASUREDSPEED=""
+      REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+      MINUTES=`echo $REALTIME | grep -E -o '([0-9\.])+?m'`
+      SECONDS=`echo $REALTIME | grep -E -o '([0-9\.])+?s'`
+      TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+      TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+      if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
+        MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",80/${TOTALSECONDS}}")
+        TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+        let MEASUREMENTS=$MEASUREMENTS+1
+      fi
+    else
+
+      echo Testing against $SPEEDSERVER.
+
+      # download 1000x1000px random image to measure the time it took
+      FACTOR=1000
+      FILESIZE=1986284
+      TIMEOUT=$(awk "BEGIN {printf \"%.0f\",${FILESIZE}/${MINIMUMSPEED}/1024/1024*8*2}")
+      echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
+      RESULT=`time curl -ks -o /dev/null -m 120 $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
+
+      # do string acrobatics to calculate connection speed...
+      MEASUREDSPEED=""
+      REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+      MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
+      SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
+      TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+      if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
+        MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
+        TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+        let MEASUREMENTS=$MEASUREMENTS+1
+        echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
+      fi
+
+      # download 2000x2000px random image to measure the time it took
+      COMPARISON=`echo | awk -v me=$MEASUREDSPEED -v mi=$MINIMUMSPEED '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
+      if [ "$COMPARISON" == "greater" ]; then
+        FACTOR=2000
+        FILESIZE=7907740
+        TIMEOUT=$(awk "BEGIN {printf \"%.0f\",${FILESIZE}/${MINIMUMSPEED}/1024/1024*8*2}")
+        echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
+        RESULT=`time curl -ks -o /dev/null -m 120 $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
+
+        # do string acrobatics to calculate connection speed...
+        MEASUREDSPEED=""
+        REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+        MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
+        SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
+        TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+        if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
+          MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
+          TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+          let MEASUREMENTS=$MEASUREMENTS+1
+          echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
+        fi
+      fi
+
+      # download 4000x4000px random image to measure the time it took
+      COMPARISON=`echo | awk -v me=$MEASUREDSPEED -v mi=$MINIMUMSPEED '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
+      if [ "$COMPARISON" == "greater" ]; then
+        FACTOR=4000
+        FILESIZE=31625365
+        TIMEOUT=$(awk "BEGIN {printf \"%.0f\",${FILESIZE}/${MINIMUMSPEED}/1024/1024*8*2}")
+        echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
+        RESULT=`time curl -ks -o /dev/null -m 120 $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
+
+        # do string acrobatics to calculate connection speed...
+        MEASUREDSPEED=""
+        REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+        MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
+        SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
+        TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+        if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
+          MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
+          TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+          let MEASUREMENTS=$MEASUREMENTS+1
+          echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
+        fi
+      fi
+
+      # download 6000x6000px random image to measure the time it took
+      COMPARISON=`echo | awk -v me=$MEASUREDSPEED -v mi=$MINIMUMSPEED '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
+      if [ "$COMPARISON" == "greater" ]; then
+        FACTOR=6000
+        FILESIZE=71154024
+        TIMEOUT=$(awk "BEGIN {printf \"%.0f\",${FILESIZE}/${MINIMUMSPEED}/1024/1024*8*2}")
+        echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
+        RESULT=`time curl -ks -o /dev/null -m 120 $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
+
+        # do string acrobatics to calculate connection speed...
+        MEASUREDSPEED=""
+        REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+        MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
+        SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
+        TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+        if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
+          MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
+          TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+          let MEASUREMENTS=$MEASUREMENTS+1
+          echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
+        fi
+      fi
+
     fi
-
   fi
 
   # delete start time file
@@ -183,14 +261,15 @@ if [ ! -z "$VPNROUTE" ]; then
   fi
 
   if [ "$MEASUREDSPEED" == "" ]; then
-    echo -e "\033[1;31mCouldn't measure speed.\033[0m"
+    echo -e "\033[1;31mCouldn't measure speed. Maybe test server blocks VPNs.\033[0m"
     if [ -f $STSFILE ]; then
       rm $STSFILE
     fi
     exit 0
   else
-    echo The download took $TOTALSECONDS seconds.
-    echo -e "\033[1;37mThis equals a speed of $MEASUREDSPEED Mbit/s.\033[0m"
+
+    AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/${MEASUREMENTS}}")
+    echo -e "\033[1;37mThis equals an average speed of $AVERAGESPEED Mbit/s.\033[0m"
 
     # prepare logging
     CURRENTSERVER=`cat $CURRENTSERVERFILE`
