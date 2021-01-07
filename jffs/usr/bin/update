@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v1.08                                                #
+#   Update script v2.01                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -23,14 +23,42 @@ if [ -f "$DIRNAME/myconfig" ]; then
   source $DIRNAME/myconfig
 fi
 
-FETCHURL=$HTTPSPROXYURL$GITHUBURL
-echo Updating global config script...
-wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/config -O $DIRNAME/config
-echo Updating checkcon script...
-wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/checkcon -O $DIRNAME/checkcon
-echo Updating speedcheck script...
-wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/speedcheck -O $DIRNAME/speedcheck
-echo Updating vpn script...
-wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/vpn -O $DIRNAME/vpn
-echo Updating update script...
-wget -t 3 -T 10 $FETCHURL/jffs/usr/bin/update -O $DIRNAME/update
+FILENAME=config
+echo Downloading $FILENAME script...
+curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
+if [ `wc -c "vpn" | awk '{print $1}'` -gt 1024 ]; then
+  echo Replacing file...
+  mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
+fi
+
+FILENAME=checkcon
+echo Downloading $FILENAME script...
+curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
+if [ `wc -c "vpn" | awk '{print $1}'` -gt 1024 ]; then
+  echo Replacing file...
+  mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
+fi
+
+FILENAME=speedcheck
+echo Downloading $FILENAME script...
+curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
+if [ `wc -c "vpn" | awk '{print $1}'` -gt 1024 ]; then
+  echo Replacing file...
+  mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
+fi
+
+FILENAME=vpn
+echo Downloading $FILENAME script...
+curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
+if [ `wc -c "vpn" | awk '{print $1}'` -gt 1024 ]; then
+  echo Replacing file...
+  mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
+fi
+
+FILENAME=update
+echo Downloading $FILENAME script...
+curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
+if [ `wc -c "vpn" | awk '{print $1}'` -gt 1024 ]; then
+  echo Replacing file...
+  mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
+fi
