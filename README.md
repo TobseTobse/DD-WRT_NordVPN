@@ -13,6 +13,7 @@ Furthermore, the author of this software does not take on any responsibilities f
 
 To run the shell scripts you need a router capable of running DD-WRT. You can check your router
 at https://dd-wrt.com/site/support/router-database. If it's not in the list get a decent router which is in the list.
+Your router should have enough memory to support curl: https://forum.dd-wrt.com/phpBB2/viewtopic.php?p=1183057.
 The router must dispose of a USB slot. If it doesn't have a USB slot get a decent router which has a USB slot.
 Then follow the instructions on dd-wrt.com to get the DD-WRT firmware running on your router.
 When DD-WRT is up and running ensure that an OpenVPN client is available (_Services > VPN_) and supports User Pass Authentication.
@@ -21,12 +22,21 @@ You will also need a USB memory stick. Get the cheapest you can find at your loc
 Last but not least you need a user account at [NordVPN](https://nordvpn.com) composed of username and password.
 
 
+### Disclaimer
+
+With end of 2020 we have officially stopped supporting routers which cannot run curl on the DD-WRT command line interface. The trouble caused by websites like GitHub which enforce HTTPS was just too big to to solved on the long term run.
+Under no circumstances we can be held responsible or liable in any way for any claims, damages, losses, expenses, costs or liabilities whatsoever. It is not likely that the software would cause any damage but we trust in your common sense and technical understanding to use the scripts in a responsible way. Do not put them in the microwave, do not shortcut, do not try to explode things with it.
+
+
 ### Router behind router setup
 
 If you would like to connect your DD-WRT router to another router which is functioning as main router to the internet this step might be of interest for you. If your DD-WRT router is connected to the internet directly you can skip this step.
 Connect your DD-WRT router with an ordinary (preferably short) patch cable from its WAN port to one of the free LAN ports of your main router.
+Ensure that the ip ranges of your outer router's network and your inner router's network do not overlap. Best go for 192.168.0.* in the outside network and for 10.0.0.* in the inside network or comparable.
 
-Now navigate in the DD-WRT menu to Setup > Basic Setup. Make sure "Gateway" and "Local DNS" are set to 0.0.0.0 and Static DNS 1 is set to the DD-WRT router's intranet IP. Navigate to Setup > Advanced Routing and set the following options:
+_Usually the following step is not necessary but for the case you cannot ping the ip address of your outer router from the DD-WRT command line you might want to try this:_
+
+Navigate in the DD-WRT menu to Setup > Basic Setup. Make sure "Gateway" and "Local DNS" are set to 0.0.0.0 and Static DNS 1 is set to the DD-WRT router's intranet IP. Navigate to Setup > Advanced Routing and set the following options:
 
 - Operating Mode: Gateway
 - Dynamic Routing Interface: Disable
@@ -37,9 +47,10 @@ Now navigate in the DD-WRT menu to Setup > Basic Setup. Make sure "Gateway" and 
 - Gateway: _IP of "outer" router_
 - Interface: LAN & WAN
 
+
 ### Configuring DD-WRT to use our scripts
 
-Put the USB memory stick into the slot. In the DD-WRT menu navigate to _Administration > Diagnosis_.
+Put the USB memory stick into the (preferably USB3) slot. In the DD-WRT menu navigate to _Administration > Diagnosis_.
 Enter the following into the "commands" textbox:
 
 ```
@@ -196,14 +207,10 @@ Breathe. It's all good. The VPN scripts write the following files into /jffs:
 - *tmp*: this directory mainly contains lock files. The scripts need them to avoid parallel script executions or boot loops.
 
 
-### Why do the scripts make use of this weird app-1540758312.000webhostapp.com URL?
-
-Yes, that's a good question. The problem lays in the limited capability of DD-WRT's built-in wget command. To keep the firmware as slim as possible the DD-WRT devs didn't implement the possibility to fetch HTTPS URLs with this command - it only understands HTTP. Unfortunately, both ipinfo.io and github.com have followed Google's call to switch to HTTPS and made HTTP URLs unavailable for our version of wget. To keep the scripts working We have placed some one-line PHP scripts at this free hoster to proxy the requests our routers make to ipinfo.io and github.com (you find these PHP files in the php directory of this release). If you don't feel safe with this solution you can host these PHP scripts at your own webserver, of course. In this case simply upload the scripts in the php directory to your server and add the IPINFOURL and HTTPSPROXYURL to your *myconfig*.
-
-
 ### Troubleshooting
 
 - Try removing the kill switch we have added as firewall script. Open a website with a browser being connected to the DD-WRT router. Do you get a result? Then your hardware setup and routing is fine. No result? Dang! Try a different version of DD-WRT. DD-WRT releases are pretty buggy sometimes.
+- Execute a *route* command via Administration > Commands (Diagnostics). Do you see your outer router's network in the list? If not read this manual again. 
 - Assuming your hardware setup and routing are fine you can put back the kill switch now. Now navigate to Administration > Commands (Diagnostics) in the DD-WRT menu and enter the following command into the "Commands" box: `cat /tmp/openvpncl/openvpn.log` and click on the button "Run Commands" below. Does this help you any further? No? Then ask Google or a friend who knows a bit more about OpenVPN.
 
 
@@ -213,7 +220,8 @@ Yes, we understand. It's a lot of text to read. So here comes the short version 
 
 - Flash [DD-WRT](https://dd-wrt.com) to your router
 - Download the [master ZIP](https://github.com/TobseTobse/DD-WRT_NordVPN/archive/master.zip), extract it to a USB stick and put the stick into your DD-WRT router
-- Login to [http://{your router ip}/admin](http://192.168.0.1/admin), copy the contents of the [Configuring DD-WRT to use our scripts](https://tobsetobse.github.io/DD-WRT_NordVPN#configuring-dd-wrt-to-use-our-scripts) text blocks to the respective fields and reboot your router
+- Login to [http://{your router ip}/admin](http://192.168.0.1/admin), copy the contents of the [Configuring DD-WRT to use our scripts](https://tobsetobse.github.io/DD-WRT_NordVPN#configuring-dd-wrt-to-use-our-scripts) text blocks to the respective fields
+- make the scripts executable and reboot your router
 
 That's it. Have fun!
 
