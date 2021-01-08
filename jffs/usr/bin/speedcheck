@@ -2,10 +2,10 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v3.02                                       #
+#   VPN speed check script v3.03                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
-#   This script must be located on a USB stick, m.00ounted on /jffs and   #
+#   This script must be located on a USB stick, mounted on /jffs and   #
 #   expects the presence of /jffs/usr/bin/vpn. All scripts must be     #
 #   "chmod ugo+x" in order to be executable. You might wanna call it   #
 #   by cron similar to that (mind "root" in the following line):       #
@@ -181,7 +181,7 @@ if [ ! -z "$VPNROUTE" ]; then
         MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
         TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
         let MEASUREMENTS=$MEASUREMENTS+1
-        echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
+        echo -e "\033[1;37mSpeed is $MEASUREDSPEED Mbit/s.\033[0m"
         TOOSLOW=0
       fi
 
@@ -205,7 +205,7 @@ if [ ! -z "$VPNROUTE" ]; then
           MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
           TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
           let MEASUREMENTS=$MEASUREMENTS+1
-          echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
+          echo -e "\033[1;37mSpeed is $MEASUREDSPEED Mbit/s.\033[0m"
           TOOSLOW=0
         fi
       fi
@@ -230,7 +230,7 @@ if [ ! -z "$VPNROUTE" ]; then
           MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
           TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
           let MEASUREMENTS=$MEASUREMENTS+1
-          echo -e "\033[1;37mSpeed result is $MEASUREDSPEED Mbit/s.\033[0m"
+          echo -e "\033[1;37mSpeed is $MEASUREDSPEED Mbit/s.\033[0m"
           TOOSLOW=0
         fi
       fi
@@ -248,7 +248,7 @@ if [ ! -z "$VPNROUTE" ]; then
     if [ -f $STSFILE ]; then
       rm $STSFILE
     fi
-    exit 0
+    exit
   else
 
     AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/${MEASUREMENTS}}")
@@ -268,7 +268,7 @@ if [ ! -z "$VPNROUTE" ]; then
         if [ -f $STSFILE ]; then
           rm $STSFILE
         fi
-        exit 0
+        exit
       fi
     fi
 
@@ -284,11 +284,14 @@ if [ "$1" == "checkonly" ]; then
   if [ -f $STSFILE ]; then
     rm $STSFILE
   fi
-  exit 0
+  exit
 fi
 
 # speed check failed requirements, so (re)invoke vpn script
 if [ -f $VPNLOCKFILE ]; then
   rm $VPNLOCKFILE
 fi
-$VPNSCRIPT rnd
+
+if [ "$1" != "" ] && [ "$1" != "readonly" ]; then
+  $VPNSCRIPT $1
+fi

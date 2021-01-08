@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v5.04                                         #
+#   VPN connector script v6.01                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -22,7 +22,7 @@ echo Connection script invoked.
 DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
 source $DIRNAME/config
 if [ -f "$DIRNAME/myconfig" ]; then
-  echo -e "\033[1;36mIncluding personal config override.\033[0m"
+  echo -e "\033[1;36mApplying personal config override.\033[0m"
   source $DIRNAME/myconfig
 fi
 
@@ -35,6 +35,19 @@ fi
 # create temporary directory if it doesn't exist yet
 if [ ! -d "$MYTMPDIR" ]; then
   mkdir $MYTMPDIR
+fi
+
+# check if country specified by parameter 1 is disallowed by configuation
+if [ ${#PARAM1} -ne 2 ]; then
+  EXCLUDECOUNTRIES=$(echo $IGNORECOUNTRIES | tr "," "\n")
+  INCLUDECOUNTRIES=$(echo $EXCLUSIVECOUNTRIES | tr "," "\n")
+  for i in $EXCLUDECOUNTRIES
+  do
+    if [ -z "${1##*$i*}" ]; then
+      echo The country \"$1\" is disallowed by configuration.
+      exit 1
+    fi
+  done
 fi
 
 # check if another instance of the vpn script is running already
@@ -68,7 +81,7 @@ if [ "$PARAM1" == "" ]; then
   echo -e "\033[1;31mNo parameter given.\033[0m"
   echo Please use a server directory as parameter from the following list:
   ls $CONFIGFILESDIR
-  echo If you\'re not sure which one to pick, just use "rnd" to pick a random server
+  echo If you\'re not sure which one to pick, just use "rnd" or the two letters describing a country to pick a random server
   if [ -f $VPNLOCKFILE ]; then
     rm $VPNLOCKFILE
   fi
@@ -76,7 +89,7 @@ if [ "$PARAM1" == "" ]; then
 fi
 
 # check for wrong parameter 1
-if [ "$PARAM1" != "rnd" ]; then
+if [ "$PARAM1" != "rnd" ] && [ ${#PARAM1} -ne 2 ]; then
   if [ ! -d "$CONFIGFILESDIR/$PARAM1/" ]; then
     echo -e "\033[1;31mDirectory $CONFIGFILESDIR/$PARAM1/ doesn't exist.\033[0m"
     if [ -f $VPNLOCKFILE ]; then
@@ -90,45 +103,71 @@ fi
 killall -q speedcheck
 
 # read local servers list outside of loop
-if [ "$1" == "rnd" ]; then
+if [ "$1" == "rnd" ] || [ ${#1} -eq 2 ]; then
   echo Reading locally stored servers list...
   SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
-  NRDIRS=`ls $CONFIGFILESDIR | wc -l`
-  echo Got $NRDIRS potential servers to connect to.
+  AMTSERVERS=0
+  for SERVERDIR in $SERVERDIRS ; do
+    let AMTSERVERS=$AMTSERVERS+1
+  done
+  echo Got $AMTSERVERS potential servers to connect to.
+
+  # filter servers by country if two characters were stated
+  if [ ${#1} -eq 2 ]; then
+    NEWSERVERDIRS=""
+    let CMPSTR=${#CONFIGFILESDIR}+2
+    let CMPEND=$CMPSTR+1
+    for SERVERDIR in $SERVERDIRS ; do
+      SERVERCOUNTRY=$(echo $SERVERDIR | cut -c${CMPSTR}-${CMPEND})
+      if [ "$SERVERCOUNTRY" == "$1" ]; then
+        NEWSERVERDIRS=$NEWSERVERDIRS$SERVERDIR" "
+      fi
+    done
+    SERVERDIRS=$NEWSERVERDIRS
+    AMTSERVERS=0
+    for SERVERDIR in $SERVERDIRS ; do
+      let AMTSERVERS=$AMTSERVERS+1
+    done
+    echo Server list narrowed down by paramter \"$1\" to $AMTSERVERS potential connection candidates.
+    if [ $AMTSERVERS -lt 1 ]; then
+      exit 1
+    fi
+  fi
+
 fi
 
-# read NordVPN servers list (realtime data)
-# if we're already connected to the VPN
-SERVERSJSON=
-VPNROUTE=`route -n | grep $VPNINTERFACE`
-if [ "$VPNROUTE" != "" ]; then
-  if [ "$CURLSUPPORTED" == "yes" ]; then
-    SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
-  else
-    SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
+if [ "$CHECKMAXLOAD" == "yes" ]; then
+
+  # read NordVPN servers list (realtime data)
+  # if we're already connected to the VPN
+  SERVERSJSON=
+  VPNROUTE=`route -n | grep $VPNINTERFACE`
+  if [ "$VPNROUTE" != "" ]; then
+    if [ "$CURLSUPPORTED" == "yes" ]; then
+      SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
+    else
+      SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
+    fi
   fi
 fi
+
+# recount amount of server config directories
+AMT=0
+for SERVERDIR in $SERVERDIRS ; do
+  if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
+    let AMT=$AMT+1
+  fi
+done
 
 RETRIESDONE=0
 while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
 
   # if parameter 1 is "rnd" user wants a random server
   # read server configuration directories
-  if [ "$1" == "rnd" ]; then
-
-    # count amount of directories
-    AMT=0
-    for SERVERDIR in $SERVERDIRS ; do
-      if [ "$SERVERDIR" != "$CONFIGFILESDIR/" ]; then
-        let AMT=$AMT+1
-      fi
-    done
+  if [ "$1" == "rnd" ] || [ ${#1} -eq 2 ]; then
 
     # loop as long as server is in excluded countries list
     # and not in exclusive countries list
-    EXCLUDECOUNTRIES=$(echo $IGNORECOUNTRIES | tr "," "\n")
-    INCLUDECOUNTRIES=$(echo $EXCLUSIVECOUNTRIES | tr "," "\n")
-
     while : ; do
 
       # initialize loop
@@ -188,6 +227,20 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
           # and find current exit node
           SERVERINFO=
           if [ "$CHECKMAXLOAD" == "yes" ] && [ "$CORRECTCOUNTRY" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
+
+            # read NordVPN servers list (realtime data)
+            # if we're already connected to the VPN
+            echo Downloading serverlist with load percentages...
+            SERVERSJSON=
+            VPNROUTE=`route -n | grep $VPNINTERFACE`
+            if [ "$VPNROUTE" != "" ]; then
+              if [ "$CURLSUPPORTED" == "yes" ]; then
+                SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
+              else
+                SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
+              fi
+            fi
+
             TOPARSER="$SERVER|$SERVERSJSON"
             SERVERINFO=`echo $TOPARSER|php -nr '
               $input = explode("|", fgets(STDIN));
@@ -266,7 +319,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     CNT=0
     while [ $CNT -le $DROPTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
     do
-      for pid in $(ps | grep openvpncl | head -n-1 | awk '{print $1}'); do kill -9 $pid; done
+      for pid in $(ps | grep openvpncl | grep -v grep | head -n 1 | awk '{print $1}'); do kill -9 $pid; done
       sleep 1
       let CNT=$CNT+1
       printf "."
@@ -407,7 +460,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     echo -e "\033[1;32mNew geolocation is $CITY in $REGION, $COUNTRY."
     echo -e "Our end service provider is $ISP.\033[0m"
     RETRIESDONE=$MAXTRIES
-    $SPEEDTESTSCRIPT
+    $SPEEDTESTSCRIPT $1
     if [ -f $VPNLOCKFILE ]; then
       rm $VPNLOCKFILE
     fi
