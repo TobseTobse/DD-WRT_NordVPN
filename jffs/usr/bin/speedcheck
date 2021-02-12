@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v3.03                                       #
+#   VPN speed check script v3.04                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -32,6 +32,31 @@ fi
 # create temporary directory if it doesn't exist yet
 if [ ! -d "$MYTMPDIR" ]; then
   mkdir $MYTMPDIR
+fi
+
+# check file system for faulty flip to read-only mode
+echo Checking $JFFSPATH mount on write access.
+touch $MYTMPDIR/writetest.lock
+if [ ! -f "$FILE" ]; then
+  rm $MYTMPDIR/writetest.lock
+  echo -e "\033[1;32mWrite access to USB stick is given.\033[0m"
+else
+
+  # reboot if last reboot was more than ... seconds ago
+  BOOTDIFF=`expr $MINREBOOTPERIOD + 777`
+  if [ -f $LTRFILE ]; then
+    LASTBOOTED=`cat $LTRFILE`
+    BOOTDIFF=`expr $NOWSTAMP - $LASTBOOTED`
+  fi
+  if [ "$BOOTDIFF" -ge "$MINREBOOTPERIOD" ]; then
+    echo -e "\033[1;31mNo write access to USB stick. Reboot initiated.\033[0m"
+    sleep $REBOOTWAIT
+    if [ -f $LTRFILE ]; then
+      rm $LTRFILE
+    fi
+    echo $NOWSTAMP >> $LTRFILE
+    reboot
+  fi
 fi
 
 # kill all vpn connection scripts
@@ -163,9 +188,9 @@ if [ ! -z "$VPNROUTE" ]; then
 
       echo Testing against $SPEEDSERVER.
 
-      # download 2000x2000px random image to measure the time it took
-      FACTOR=2000
-      FILESIZE=7907740
+      # download 3000x3000px random image to measure the time it took
+      FACTOR=3000
+      FILESIZE=17816816
       TIMEOUT=$(awk "BEGIN {printf \"%.0f\",${FILESIZE}/${MINIMUMSPEED}/1024/1024*8*2}")
       echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
       RESULT=`time curl -ks -o /dev/null -m 120 $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
@@ -264,7 +289,7 @@ if [ ! -z "$VPNROUTE" ]; then
       if [ "$COMPARISON" == "greater" ]; then
         # log good speed to file
         echo $NOWSTAMP $CURRENTSERVER: $AVERAGESPEED Mbit/s >> $GOODLOGFILE
-        echo -e "\033[1;32mThat's fast enough.\033[0m"
+        echo -e "\033[1;32mThat's faster than the desired minimum of $MINIMUMSPEED Mbit/s.\033[0m"
         if [ -f $STSFILE ]; then
           rm $STSFILE
         fi
@@ -292,6 +317,10 @@ if [ -f $VPNLOCKFILE ]; then
   rm $VPNLOCKFILE
 fi
 
-if [ "$1" != "" ] && [ "$1" != "readonly" ]; then
-  $VPNSCRIPT $1
+if [ "$1" != "readonly" ]; then
+  if [ "$1" != "" ]; then
+    $VPNSCRIPT $1
+  else
+    $VPNSCRIPT rnd
+  fi
 fi
