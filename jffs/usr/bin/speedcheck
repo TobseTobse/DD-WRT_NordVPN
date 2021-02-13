@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v3.04                                       #
+#   VPN speed check script v3.05                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -23,12 +23,6 @@ if [ -f "$DIRNAME/myconfig" ]; then
   source $DIRNAME/myconfig
 fi
 
-# log script call
-if [ "$LOGGING" == "yes" ]; then
-  NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
-  echo $NOWSTAMP speedcheck script called >> $GENERALLOG
-fi
-
 # create temporary directory if it doesn't exist yet
 if [ ! -d "$MYTMPDIR" ]; then
   mkdir $MYTMPDIR
@@ -37,7 +31,7 @@ fi
 # check file system for faulty flip to read-only mode
 echo Checking $JFFSPATH mount on write access.
 touch $MYTMPDIR/writetest.lock
-if [ ! -f "$FILE" ]; then
+if [ -f "$MYTMPDIR/writetest.lock" ]; then
   rm $MYTMPDIR/writetest.lock
   echo -e "\033[1;32mWrite access to USB stick is given.\033[0m"
 else
@@ -57,6 +51,12 @@ else
     echo $NOWSTAMP >> $LTRFILE
     reboot
   fi
+fi
+
+# log script call
+if [ "$LOGGING" == "yes" ]; then
+  NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
+  echo $NOWSTAMP speedcheck script called >> $GENERALLOG
 fi
 
 # kill all vpn connection scripts

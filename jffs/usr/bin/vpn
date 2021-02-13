@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v6.01                                         #
+#   VPN connector script v6.02                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -16,6 +16,7 @@
 #                                                                      #
 ########################################################################
 
+echo
 echo Connection script invoked.
 
 # load config
@@ -289,8 +290,8 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   # show server information to user
   if [ "$CHECKMAXLOAD" == "yes" ] && [ "$SERVERINFO" != "" ]; then
     echo
-    echo -e "\033[1;32mServer $SERVER fullfills maximum load rule."
-    echo -e "$SERVERINFO\033[0m"
+    echo -e "\033[1;32mServer $SERVER fulfills maximum load rule.\033[0m"
+    echo "$SERVERINFO"
   fi
 
   # init
@@ -457,8 +458,8 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       fi
       COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | grep -E -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | grep -E -o '[^\"]{3,}'`
     fi
-    echo -e "\033[1;32mNew geolocation is $CITY in $REGION, $COUNTRY."
-    echo -e "Our end service provider is $ISP.\033[0m"
+    echo -e "New geolocation is $CITY in $REGION, $COUNTRY."
+    echo -e "Our end service provider is $ISP."
     RETRIESDONE=$MAXTRIES
     $SPEEDTESTSCRIPT $1
     if [ -f $VPNLOCKFILE ]; then
@@ -467,6 +468,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     exit
   fi
   let RETRIESDONE=$RETRIESDONE+1
+  sleep "$(($RETRIESDONE * 5))"
 done
 
 sleep $REBOOTWAIT
