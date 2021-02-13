@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v6.02                                         #
+#   VPN connector script v6.03                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -101,7 +101,7 @@ if [ "$PARAM1" != "rnd" ] && [ ${#PARAM1} -ne 2 ]; then
 fi
 
 # kill all speedcheck scripts
-killall -q speedcheck
+killall -q speedcheck >/dev/null 2>/dev/null
 
 # read local servers list outside of loop
 if [ "$1" == "rnd" ] || [ ${#1} -eq 2 ]; then
@@ -320,7 +320,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     CNT=0
     while [ $CNT -le $DROPTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
     do
-      for pid in $(ps | grep openvpncl | grep -v grep | head -n 1 | awk '{print $1}'); do kill -9 $pid; done
+      for pid in $(ps | grep openvpncl | grep -v grep | head -n 1 | awk '{print $1}'); do kill -9 $pid >/dev/null 2>/dev/null; done
       sleep 1
       let CNT=$CNT+1
       printf "."
@@ -458,14 +458,27 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       fi
       COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | grep -E -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | grep -E -o '[^\"]{3,}'`
     fi
-    echo -e "New geolocation is $CITY in $REGION, $COUNTRY."
-    echo -e "Our end service provider is $ISP."
-    RETRIESDONE=$MAXTRIES
-    $SPEEDTESTSCRIPT $1
-    if [ -f $VPNLOCKFILE ]; then
-      rm $VPNLOCKFILE
+
+    # check if country of VPN exit node is disallowed by configuation
+    COUNTRYOK="yes"
+    for i in $EXCLUDECOUNTRIES
+    do
+      if [ -z "${COUNTRYCODE##*$i*}" ]; then
+        echo -e "\033[1;31mThe country \"$COUNTRY\" ($COUNTRYCODE) is disallowed by configuration.\033[0m"
+        COUNTRYOK="no"
+      fi
+    done
+
+    if [ "$COUNTRYOK" == "yes" ]; then
+      echo -e "New geolocation is $CITY in $REGION, $COUNTRY."
+      echo -e "Our end service provider is $ISP."
+      RETRIESDONE=$MAXTRIES
+      $SPEEDTESTSCRIPT $1
+      if [ -f $VPNLOCKFILE ]; then
+        rm $VPNLOCKFILE
+      fi
+      exit
     fi
-    exit
   fi
   let RETRIESDONE=$RETRIESDONE+1
   sleep "$(($RETRIESDONE * 5))"
