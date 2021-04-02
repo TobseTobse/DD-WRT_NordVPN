@@ -133,8 +133,8 @@ DEADLOGFILE=$JFFSPATH/logs/servers.dead.log
 # * http://bot.whatismyipaddress.com
 # * http://eth0.me
 # * http://ifconfig.me/ip
-# default: http://147.75.47.199 (this is icanhazip.com)
-IPADDRESSURL=http://147.75.47.199
+# default: http://wgetip.com
+IPADDRESSURL=http://wgetip.com
 
 # custom ipinfo.io URL (because of wget HTTPS insufficiency)
 # if you want to host the ipinfo proxy scripts yourself please
@@ -247,7 +247,3 @@ MAXFAILS=5
 # GitHub Master URL
 # default: https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
 GITHUBURL=https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
-
-# HTTPS to HTTP proxy URL
-# default: http://dd-wrt.atwebpages.com/proxy?url=
-HTTPSPROXYURL=http://dd-wrt.atwebpages.com/proxy?url=
