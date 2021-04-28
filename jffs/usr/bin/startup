@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Startup script v1.04                                               #
+#   Startup script v1.05                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2018                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -28,11 +28,11 @@ fi
 
 # delete orphaned lock files
 if [ -f "$VPNLOCKFILE" ]; then
-  rm $VPNLOCKFILE
+  rm -f $VPNLOCKFILE
   echo Deleted vpn script lock file.
 fi
 if [ -f "$STSFILE" ]; then
-  rm $STSFILE
+  rm -f $STSFILE
   echo Deleted speedcheck script lock file.
 fi
 

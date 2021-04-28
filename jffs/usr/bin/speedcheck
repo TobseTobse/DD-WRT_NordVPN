@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v3.06                                       #
+#   VPN speed check script v3.07                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -38,7 +38,7 @@ fi
 echo Checking $JFFSPATH mount on write access.
 touch $MYTMPDIR/writetest.lock >/dev/null 2>/dev/null
 if [ -f "$MYTMPDIR/writetest.lock" ]; then
-  rm $MYTMPDIR/writetest.lock
+  rm -f $MYTMPDIR/writetest.lock
   echo -e "\033[1;32mWrite access to USB stick is given.\033[0m"
 else
 
@@ -52,7 +52,7 @@ else
     echo -e "\033[1;31mNo write access to USB stick. Reboot initiated.\033[0m"
     sleep $REBOOTWAIT
     if [ -f $LTRFILE ]; then
-      rm $LTRFILE
+      rm -f $LTRFILE
     fi
     echo $NOWSTAMP >> $LTRFILE
     reboot
@@ -88,7 +88,7 @@ if [ ! -z "$VPNROUTE" ]; then
     if [ "$BOOTDIFF" -ge "$MINREBOOTPERIOD" ]; then
       sleep $REBOOTWAIT
       if [ -f $LTRFILE ]; then
-        rm $LTRFILE
+        rm -f $LTRFILE
       fi
       echo $NOWSTAMP >> $LTRFILE
       reboot
@@ -265,13 +265,13 @@ if [ ! -z "$VPNROUTE" ]; then
 
   # delete start time file
   if [ -f $STSFILE ]; then
-    rm $STSFILE
+    rm -f $STSFILE
   fi
 
   if [ "$MEASUREDSPEED" == "" ]; then
     echo -e "\033[1;31mCouldn't measure speed. Maybe test server blocks VPNs.\033[0m"
     if [ -f $STSFILE ]; then
-      rm $STSFILE
+      rm -f $STSFILE
     fi
     exit
   else
@@ -291,7 +291,7 @@ if [ ! -z "$VPNROUTE" ]; then
         echo $NOWSTAMP $CURRENTSERVER: $AVERAGESPEED Mbit/s >> $GOODLOGFILE
         echo -e "\033[1;32mThat's faster than the desired minimum of $MINIMUMSPEED Mbit/s.\033[0m"
         if [ -f $STSFILE ]; then
-          rm $STSFILE
+          rm -f $STSFILE
         fi
         exit
       fi
@@ -307,14 +307,14 @@ fi
 
 if [ "$1" == "checkonly" ]; then
   if [ -f $STSFILE ]; then
-    rm $STSFILE
+    rm -f $STSFILE
   fi
   exit
 fi
 
 # speed check failed requirements, so (re)invoke vpn script
 if [ -f $VPNLOCKFILE ]; then
-  rm $VPNLOCKFILE
+  rm -f $VPNLOCKFILE
 fi
 
 if [ "$1" != "readonly" ]; then

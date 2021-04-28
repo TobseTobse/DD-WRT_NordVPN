@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v6.03                                         #
+#   VPN connector script v6.04                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -57,7 +57,7 @@ if [ -f $VPNLOCKFILE ]; then
   LASTACTIVE=`cat $VPNLOCKFILE`
   RUNNINGSINCE=`expr $NOWSTAMP - $LASTACTIVE`
   if [ $RUNNINGSINCE -gt $MAXVPNEXECTIME ]; then
-    rm $VPNLOCKFILE
+    rm -f $VPNLOCKFILE
   else
     echo -e "\033[1;31mAnother instance of the vpn script is running since $RUNNINGSINCE seconds.\033[0m"
     MUSTWAIT=`expr $MAXVPNEXECTIME - $RUNNINGSINCE`
@@ -84,7 +84,7 @@ if [ "$PARAM1" == "" ]; then
   ls $CONFIGFILESDIR
   echo If you\'re not sure which one to pick, just use "rnd" or the two letters describing a country to pick a random server
   if [ -f $VPNLOCKFILE ]; then
-    rm $VPNLOCKFILE
+    rm -f $VPNLOCKFILE
   fi
   exit 1
 fi
@@ -94,7 +94,7 @@ if [ "$PARAM1" != "rnd" ] && [ ${#PARAM1} -ne 2 ]; then
   if [ ! -d "$CONFIGFILESDIR/$PARAM1/" ]; then
     echo -e "\033[1;31mDirectory $CONFIGFILESDIR/$PARAM1/ doesn't exist.\033[0m"
     if [ -f $VPNLOCKFILE ]; then
-      rm $VPNLOCKFILE
+      rm -f $VPNLOCKFILE
     fi
     exit 1
   fi
@@ -475,7 +475,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       RETRIESDONE=$MAXTRIES
       $SPEEDTESTSCRIPT $1
       if [ -f $VPNLOCKFILE ]; then
-        rm $VPNLOCKFILE
+        rm -f $VPNLOCKFILE
       fi
       exit
     fi
@@ -486,7 +486,7 @@ done
 
 sleep $REBOOTWAIT
 if [ -f $LTRFILE ]; then
-  rm $LTRFILE
+  rm -f $LTRFILE
 fi
 NOWSTAMP=`date +%s`
 echo $NOWSTAMP >> $LTRFILE
