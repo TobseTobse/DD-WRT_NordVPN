@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v3.07                                       #
+#   VPN speed check script v3.08                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -273,7 +273,7 @@ if [ ! -z "$VPNROUTE" ]; then
     if [ -f $STSFILE ]; then
       rm -f $STSFILE
     fi
-    exit
+    exit 1
   else
 
     AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/${MEASUREMENTS}}")

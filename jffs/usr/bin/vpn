@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v6.04                                         #
+#   VPN connector script v6.05                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -46,6 +46,9 @@ if [ ${#PARAM1} -ne 2 ]; then
   do
     if [ -z "${1##*$i*}" ]; then
       echo The country \"$1\" is disallowed by configuration.
+      if [ -f $VPNLOCKFILE ]; then
+        rm -f $VPNLOCKFILE
+      fi
       exit 1
     fi
   done
@@ -62,7 +65,7 @@ if [ -f $VPNLOCKFILE ]; then
     echo -e "\033[1;31mAnother instance of the vpn script is running since $RUNNINGSINCE seconds.\033[0m"
     MUSTWAIT=`expr $MAXVPNEXECTIME - $RUNNINGSINCE`
     echo "You can restart this script in $MUSTWAIT seconds."
-    exit
+    exit 1
   fi
 fi
 echo $NOWSTAMP >> $VPNLOCKFILE
@@ -103,6 +106,11 @@ fi
 # kill all speedcheck scripts
 killall -q speedcheck >/dev/null 2>/dev/null
 
+# delete start time file
+if [ -f $STSFILE ]; then
+  rm -f $STSFILE
+fi
+
 # read local servers list outside of loop
 if [ "$1" == "rnd" ] || [ ${#1} -eq 2 ]; then
   echo Reading locally stored servers list...
@@ -131,6 +139,9 @@ if [ "$1" == "rnd" ] || [ ${#1} -eq 2 ]; then
     done
     echo Server list narrowed down by paramter \"$1\" to $AMTSERVERS potential connection candidates.
     if [ $AMTSERVERS -lt 1 ]; then
+      if [ -f $VPNLOCKFILE ]; then
+        rm -f $VPNLOCKFILE
+      fi
       exit 1
     fi
   fi
