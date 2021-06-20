@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v7.01                                         #
+#   VPN connector script v7.02                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -380,7 +380,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
             FOUNDLINE="yes"
           fi
           if [ "$FOUNDLINE" == "yes" ] && [ "$LINE" != "$LASTLOGLINE" ]; then
-            if echo "$LINE" | grep 'route add' > /dev/nul; then
+            if echo "$LINE" | grep -E 'route.+add' > /dev/nul; then
               echo -e "\033[1;32m$LINE\033[0m"
             elif echo "$LINE" | grep 'AUTH_FAILED' > /dev/nul; then
               echo -e "\033[1;31m$LINE\033[0m"
