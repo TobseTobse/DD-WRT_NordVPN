@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v7.02                                         #
+#   VPN connector script v7.03                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -301,11 +301,12 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   # show server information to user
   if [ "$CHECKMAXLOAD" == "yes" ] && [ "$SERVERINFO" != "" ]; then
     echo
-    echo -e "\033[1;32mServer $SERVER fulfills maximum load rule.\033[0m"
+    echo -e "\033[1;32mServer $SERVER fulfills maximum load rule ($SERVERLOAD% <= $MAXLOAD%).\033[0m"
     echo "$SERVERINFO"
   fi
 
   # init
+  AUTHFAILED="no"
   let TRYNUMBER=$RETRIESDONE+1
   echo
   echo -e "\033[1;37mThis is try #$TRYNUMBER of $MAXTRIES."
@@ -380,10 +381,17 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
             FOUNDLINE="yes"
           fi
           if [ "$FOUNDLINE" == "yes" ] && [ "$LINE" != "$LASTLOGLINE" ]; then
-            if echo "$LINE" | grep -E 'route.+add' > /dev/nul; then
+            if echo "$LINE" | grep -E '(route|addr).+add' > /dev/nul; then
               echo -e "\033[1;32m$LINE\033[0m"
             elif echo "$LINE" | grep 'AUTH_FAILED' > /dev/nul; then
+              AUTHFAILED="yes"
               echo -e "\033[1;31m$LINE\033[0m"
+              break
+            elif echo "$LINE" | grep 'Operation timed out' > /dev/nul; then
+              echo -e "\033[1;31m$LINE\033[0m"
+              break
+            elif echo "$LINE" | grep 'Restart pause' > /dev/nul; then
+              break
             else
               echo -e "\033[1;36m$LINE\033[0m"
             fi
@@ -402,6 +410,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
         # flush DNS and get new public IPv4
         stopservice dnsmasq
         startservice dnsmasq
+        sleep 5
         NEWIP=`wget -t 5 -T 10 -q -O - $IPADDRESSURL`
       fi
     fi
@@ -411,7 +420,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
 
   # echo new IPv4, city and country
   if [ "$NEWIP" == "$OLDIP" ]; then
-    echo -e "\033[1;31mIPv4 hasn't changed within $CONNECTTIMEOUT seconds.\033[0m"
+    echo -e "\033[1;31mIPv4 hasn't changed.\033[0m"
     VPNROUTE=`route -n | grep $VPNINTERFACE`
     if [ "$VPNROUTE" == "" ]; then
 
@@ -421,8 +430,18 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       echo -e "\033[1;31mHouston, we have a problem. Connecting to exit node $PARAM1 has failed.\033[0m"
       echo
       echo
+
+      # prevent another AUTH_FAILED
+      if [ "$AUTHFAILED" == "yes" ]; then
+        AUTHFAILED="no"
+        let SLEEPDURATION=$(($RETRIESDONE*15+15))
+        echo "Waiting for $SLEEPDURATION seconds to prevent another authentication failure..."
+        sleep $SLEEPDURATION
+      fi
+
     fi
   else
+    echo
     echo Current server is $PARAM1.
     echo $PARAM1 > $CURRENTSERVERFILE
     
@@ -498,8 +517,6 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     fi
   fi
   let RETRIESDONE=$RETRIESDONE+1
-  echo "Waiting for $(($RETRIESDONE * 15)) seconds to avoid AUTH_FAILED..."
-  sleep "$(($RETRIESDONE * 15))"
 done
 
 sleep $REBOOTWAIT
