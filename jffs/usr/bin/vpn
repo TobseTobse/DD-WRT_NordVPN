@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v7.03                                         #
+#   VPN connector script v7.04                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -427,14 +427,14 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       # log dead server
       NOWSTAMP=`date "+%Y-%m-%d %H:%M:%S"`
       echo $NOWSTAMP $PARAM1 >> $DEADLOGFILE
-      echo -e "\033[1;31mHouston, we have a problem. Connecting to exit node $PARAM1 has failed.\033[0m"
+      echo -e "\033[1;31mConnecting to exit node $PARAM1 has failed.\033[0m"
       echo
       echo
 
       # prevent another AUTH_FAILED
       if [ "$AUTHFAILED" == "yes" ]; then
         AUTHFAILED="no"
-        let SLEEPDURATION=$(($RETRIESDONE*15+15))
+        let SLEEPDURATION=45+$(($RETRIESDONE*15+15))
         echo "Waiting for $SLEEPDURATION seconds to prevent another authentication failure..."
         sleep $SLEEPDURATION
       fi
