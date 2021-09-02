@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v4.01                                       #
+#   VPN speed check script v4.02                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -189,13 +189,14 @@ if [ ! -z "$VPNROUTE" ]; then
       FACTOR=500
       FILESIZE=505544
       echo Testing against $SPEEDSERVER.
-      echo Downloading ten times a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
+      echo Downloading twenty times a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
 
-      for i in 1 2 3 4 5 6 7 8 9 10; do
+      for i in `seq 20`
+      do
 
-        # download random image to measure the time it took
-        TIMEOUT=$(awk "BEGIN {printf \"%.0f\",${FILESIZE}/${MINIMUMSPEED}/1024/1024*8*2}")
-        RESULT=`time curl -ks -o /dev/null -m 120 $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
+        # download a random image to measure the time it took
+        TIMEOUT=10
+        RESULT=`time curl -ks -o /dev/null -m $TIMEOUT $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
 
         # do string acrobatics to calculate connection speed...
         MEASUREDSPEED=""
@@ -208,17 +209,16 @@ if [ ! -z "$VPNROUTE" ]; then
           MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
           TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
           let MEASUREMENTS=$MEASUREMENTS+1
-          echo -e "\033[1;37mDownload #$i was $MEASUREDSPEED Mbit/s fast.\033[0m"
+          echo -e "\033[1;37mDownload speed #$i was $MEASUREDSPEED Mbit/s.\033[0m"
           TOOSLOW=0
         fi
 
-        # check if measured speed is fast enough
-        COMPARISON=`echo | awk -v me=$MEASUREDSPEED -v mi=$MINIMUMSPEED '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
-        if [ "$i" -gt 1 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            TOOSLOW=1
-            break
-          fi
+        # stop checking if timeout was exceeded
+        MAXTSECONDS=
+        COMPARISON=`echo | awk -v me=$TOTALSECONDS -v mi=9 '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
+        if [ "$COMPARISON" == "greater" ]; then
+          TOOSLOW=1
+          break
         fi
       done
 
