@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v4.02                                       #
+#   VPN speed check script v5.01                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -58,6 +58,18 @@ else
     reboot
   fi
 fi
+
+# define file sizes for speed test pixels
+SIZE500=505544
+SIZE1000=1986284
+SIZE2000=4468241
+SIZE2500=12407926
+SIZE3000=17816816
+SIZE3500=24262167
+SIZE4000=31625365
+SIZE5000=49454450
+SIZE6000=71154024
+SIZE7000=96912784
 
 # kill all vpn connection scripts
 for pid in $(ps | awk '/\/vpn/' | head -n-1 | awk '{print $1}'); do kill -9 $pid >/dev/null 2>&1; done
@@ -187,12 +199,13 @@ if [ ! -z "$VPNROUTE" ]; then
     else
 
       FACTOR=500
-      FILESIZE=505544
+      FILESIZE=$SIZE500
       echo Testing against $SPEEDSERVER.
-      echo Downloading twenty times a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
 
-      for i in `seq 20`
+      for i in `seq 10`
       do
+
+        echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
 
         # download a random image to measure the time it took
         TIMEOUT=10
@@ -206,11 +219,84 @@ if [ ! -z "$VPNROUTE" ]; then
         TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
         TOOSLOW=1
         if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
-          MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
+          MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*16}")
           TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
           let MEASUREMENTS=$MEASUREMENTS+1
           echo -e "\033[1;37mDownload speed #$i was $MEASUREDSPEED Mbit/s.\033[0m"
           TOOSLOW=0
+        fi
+
+        # dynamic up- or downscaling of download size
+        COMPARISON=`echo | awk -v ts=$TOTALSECONDS -v ma=5 '{if (ts>ma) printf ("greater"); else printf ("smaller");}'`
+        if [ $FACTOR == 500 ]; then
+          if [ "$COMPARISON" == "smaller" ]; then
+            FACTOR=1000
+            FILESIZE=$SIZE1000
+          fi
+        elif [ $FACTOR == 1000 ]; then
+          if [ "$COMPARISON" == "smaller" ]; then
+            FACTOR=2000
+            FILESIZE=$SIZE2000
+          else
+            FACTOR=500
+            FILESIZE=$SIZE500
+          fi
+        elif [ $FACTOR == 2000 ]; then
+          if [ "$COMPARISON" == "smaller" ]; then
+            FACTOR=2500
+            FILESIZE=$SIZE2500
+          else
+            FACTOR=1000
+            FILESIZE=$SIZE1000
+          fi
+        elif [ $FACTOR == 2500 ]; then
+          if [ "$COMPARISON" == "smaller" ]; then
+            FACTOR=3000
+            FILESIZE=$SIZE3000
+          else
+            FACTOR=2000
+            FILESIZE=$SIZE2000
+          fi
+        elif [ $FACTOR == 3000 ]; then
+          if [ "$COMPARISON" == "smaller" ]; then
+            FACTOR=3500
+            FILESIZE=$SIZE3500
+          else
+            FACTOR=2500
+            FILESIZE=$SIZE2500
+          fi
+        elif [ $FACTOR == 3500 ]; then
+          if [ "$COMPARISON" == "smaller" ]; then
+            FACTOR=4000
+            FILESIZE=$SIZE4000
+          else
+            FACTOR=3000
+            FILESIZE=$SIZE3000
+          fi
+        elif [ $FACTOR == 4000 ]; then
+          if [ "$COMPARISON" == "smaller" ]; then
+            FACTOR=5000
+            FILESIZE=$SIZE5000
+          else
+            FACTOR=3500
+            FILESIZE=$SIZE3500
+          fi
+        elif [ $FACTOR == 5000 ]; then
+          if [ "$COMPARISON" == "smaller" ]; then
+            FACTOR=6000
+            FILESIZE=$SIZE6000
+          else
+            FACTOR=4000
+            FILESIZE=$SIZE4000
+          fi
+        elif [ $FACTOR == 6000 ]; then
+          if [ "$COMPARISON" == "smaller" ]; then
+            FACTOR=7000
+            FILESIZE=$SIZE7000
+          else
+            FACTOR=5000
+            FILESIZE=$SIZE5000
+          fi
         fi
 
         # stop checking if timeout was exceeded
