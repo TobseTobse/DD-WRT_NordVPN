@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v7.04                                         #
+#   VPN connector script v7.05                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -385,12 +385,15 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
               echo -e "\033[1;32m$LINE\033[0m"
             elif echo "$LINE" | grep 'AUTH_FAILED' > /dev/nul; then
               AUTHFAILED="yes"
+              RUNNINGPERIOD=$CONNECTTIMEOUT
               echo -e "\033[1;31m$LINE\033[0m"
               break
             elif echo "$LINE" | grep 'Operation timed out' > /dev/nul; then
+              RUNNINGPERIOD=$CONNECTTIMEOUT
               echo -e "\033[1;31m$LINE\033[0m"
               break
             elif echo "$LINE" | grep 'Restart pause' > /dev/nul; then
+              RUNNINGPERIOD=$CONNECTTIMEOUT
               break
             else
               echo -e "\033[1;36m$LINE\033[0m"
@@ -434,7 +437,8 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       # prevent another AUTH_FAILED
       if [ "$AUTHFAILED" == "yes" ]; then
         AUTHFAILED="no"
-        let SLEEPDURATION=45+$(($RETRIESDONE*15+15))
+        RND=`awk -v min=0 -v max=60 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+        let SLEEPDURATION=$((45 + $RETRIESDONE*15 + $RND))
         echo "Waiting for $SLEEPDURATION seconds to prevent another authentication failure..."
         sleep $SLEEPDURATION
       fi

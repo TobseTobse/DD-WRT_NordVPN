@@ -1,0 +1,27 @@
+#!/bin/sh
+
+########################################################################
+#                                                                      #
+#   VPN kill script v1.00                                              #
+#   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
+#                                                                      #
+#   This script must be located on a USB stick, mounted on /jffs and   #
+#   expects the presence of the vpn check script in /jffs/usr/bin/.    #
+#   All scripts must be "chmod ugo+x" in order to be executable.       #
+#                                                                      #
+########################################################################
+
+# load config
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+source $DIRNAME/config
+if [ -f "$DIRNAME/myconfig" ]; then
+  echo -e "\033[1;36mApplying personal config override.\033[0m"
+  source $DIRNAME/myconfig
+fi
+
+cd MYTMPDIR
+killall sh
+
+if [ -f "*.lock" ]; then
+  rm *.lock
+fi
