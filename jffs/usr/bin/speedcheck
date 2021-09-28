@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v5.01                                       #
+#   VPN speed check script v5.02                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -219,7 +219,7 @@ if [ ! -z "$VPNROUTE" ]; then
         TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
         TOOSLOW=1
         if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
-          MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*16}")
+          MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
           TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
           let MEASUREMENTS=$MEASUREMENTS+1
           echo -e "\033[1;37mDownload speed #$i was $MEASUREDSPEED Mbit/s.\033[0m"

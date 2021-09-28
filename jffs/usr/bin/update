@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v3.01                                                #
+#   Update script v3.02                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -59,6 +59,16 @@ if [ -f "$DIRNAME/$FILENAME" ]; then
 fi
 
 FILENAME=vpn
+echo Downloading $FILENAME script...
+curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
+if [ -f "$DIRNAME/$FILENAME" ]; then
+  if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 1024 ]; then
+    echo Replacing file...
+    mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
+  fi
+fi
+
+FILENAME=killvpn
 echo Downloading $FILENAME script...
 curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
 if [ -f "$DIRNAME/$FILENAME" ]; then
