@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN kill script v1.00                                              #
+#   VPN kill script v1.01                                              #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -19,9 +19,9 @@ if [ -f "$DIRNAME/myconfig" ]; then
   source $DIRNAME/myconfig
 fi
 
-cd MYTMPDIR
-killall sh
-
-if [ -f "*.lock" ]; then
-  rm *.lock
+cd $MYTMPDIR
+if [ -f "vpn.lock" ]; then
+  rm vpn.lock
 fi
+
+killall sh
