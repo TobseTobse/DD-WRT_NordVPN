@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v3.02                                                #
+#   Update script v3.03                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -28,62 +28,21 @@ if [ -f "$DIRNAME/*.update" ]; then
   rm $DIRNAME/*.update
 fi
 
-FILENAME=config
-echo Downloading $FILENAME script...
-curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
-if [ -f "$DIRNAME/$FILENAME" ]; then
-  if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 1024 ]; then
+update_file() {
+  FILENAME=$1
+  echo -e "\033[1;37mDownloading $FILENAME script...\033[0m"
+  curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
+  if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 1000 ]; then
     echo Replacing file...
     mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
   fi
-fi
+  echo Done.
+}
 
-FILENAME=checkcon
-echo Downloading $FILENAME script...
-curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
-if [ -f "$DIRNAME/$FILENAME" ]; then
-  if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 1024 ]; then
-    echo Replacing file...
-    mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
-  fi
-fi
-
-FILENAME=speedcheck
-echo Downloading $FILENAME script...
-curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
-if [ -f "$DIRNAME/$FILENAME" ]; then
-  if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 1024 ]; then
-    echo Replacing file...
-    mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
-  fi
-fi
-
-FILENAME=vpn
-echo Downloading $FILENAME script...
-curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
-if [ -f "$DIRNAME/$FILENAME" ]; then
-  if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 1024 ]; then
-    echo Replacing file...
-    mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
-  fi
-fi
-
-FILENAME=killvpn
-echo Downloading $FILENAME script...
-curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
-if [ -f "$DIRNAME/$FILENAME" ]; then
-  if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 1024 ]; then
-    echo Replacing file...
-    mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
-  fi
-fi
-
-FILENAME=update
-echo Downloading $FILENAME script...
-curl -m 120 -ks $GITHUBURL/jffs/usr/bin/${FILENAME} -o $DIRNAME/${FILENAME}.update
-if [ -f "$DIRNAME/$FILENAME" ]; then
-  if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 1024 ]; then
-    echo Replacing file...
-    mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
-  fi
-fi
+update_file config
+update_file checkcon
+update_file speedcheck
+update_file vpn
+update_file killvpn
+update_file update
+echo -e "\033[1;32mThe update process has finished successfully.\033[0m"
