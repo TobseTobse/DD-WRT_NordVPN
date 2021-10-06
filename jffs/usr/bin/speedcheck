@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v5.02                                       #
+#   VPN speed check script v5.03                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -118,6 +118,7 @@ if [ ! -z "$VPNROUTE" ]; then
   # initialize varaiables for average speed calculation
   TOTALSPEED=0
   MEASUREMENTS=0
+  MAXSIZE=99999
 
   # if current country unknown do 10 MB test with softlayer.com
   if [ "$CURRENTCOUNTRYCODE" == "" ]; then
@@ -230,72 +231,98 @@ if [ ! -z "$VPNROUTE" ]; then
         COMPARISON=`echo | awk -v ts=$TOTALSECONDS -v ma=5 '{if (ts>ma) printf ("greater"); else printf ("smaller");}'`
         if [ $FACTOR == 500 ]; then
           if [ "$COMPARISON" == "smaller" ]; then
-            FACTOR=1000
-            FILESIZE=$SIZE1000
+            if [ $FACTOR -lt $MAXSIZE ]; then
+              FACTOR=1000
+              FILESIZE=$SIZE1000
+            fi
           fi
         elif [ $FACTOR == 1000 ]; then
           if [ "$COMPARISON" == "smaller" ]; then
-            FACTOR=2000
-            FILESIZE=$SIZE2000
+            if [ $FACTOR -lt $MAXSIZE ]; then
+              FACTOR=2000
+              FILESIZE=$SIZE2000
+            fi
           else
             FACTOR=500
             FILESIZE=$SIZE500
+            MAXSIZE=$FACTOR
           fi
         elif [ $FACTOR == 2000 ]; then
           if [ "$COMPARISON" == "smaller" ]; then
-            FACTOR=2500
-            FILESIZE=$SIZE2500
+            if [ $FACTOR -lt $MAXSIZE ]; then
+              FACTOR=2500
+              FILESIZE=$SIZE2500
+            fi
           else
             FACTOR=1000
             FILESIZE=$SIZE1000
+            MAXSIZE=$FACTOR
           fi
         elif [ $FACTOR == 2500 ]; then
           if [ "$COMPARISON" == "smaller" ]; then
-            FACTOR=3000
-            FILESIZE=$SIZE3000
+            if [ $FACTOR -lt $MAXSIZE ]; then
+              FACTOR=3000
+              FILESIZE=$SIZE3000
+            fi
           else
             FACTOR=2000
             FILESIZE=$SIZE2000
+            MAXSIZE=$FACTOR
           fi
         elif [ $FACTOR == 3000 ]; then
           if [ "$COMPARISON" == "smaller" ]; then
-            FACTOR=3500
-            FILESIZE=$SIZE3500
+            if [ $FACTOR -lt $MAXSIZE ]; then
+              FACTOR=3500
+              FILESIZE=$SIZE3500
+            fi
           else
             FACTOR=2500
             FILESIZE=$SIZE2500
+            MAXSIZE=$FACTOR
           fi
         elif [ $FACTOR == 3500 ]; then
           if [ "$COMPARISON" == "smaller" ]; then
-            FACTOR=4000
-            FILESIZE=$SIZE4000
+            if [ $FACTOR -lt $MAXSIZE ]; then
+              FACTOR=4000
+              FILESIZE=$SIZE4000
+            fi
           else
             FACTOR=3000
             FILESIZE=$SIZE3000
+            MAXSIZE=$FACTOR
           fi
         elif [ $FACTOR == 4000 ]; then
           if [ "$COMPARISON" == "smaller" ]; then
-            FACTOR=5000
-            FILESIZE=$SIZE5000
+            if [ $FACTOR -lt $MAXSIZE ]; then
+              FACTOR=5000
+              FILESIZE=$SIZE5000
+            fi
           else
             FACTOR=3500
             FILESIZE=$SIZE3500
+            MAXSIZE=$FACTOR
           fi
         elif [ $FACTOR == 5000 ]; then
           if [ "$COMPARISON" == "smaller" ]; then
-            FACTOR=6000
-            FILESIZE=$SIZE6000
+            if [ $FACTOR -lt $MAXSIZE ]; then
+              FACTOR=6000
+              FILESIZE=$SIZE6000
+            fi
           else
             FACTOR=4000
             FILESIZE=$SIZE4000
+            MAXSIZE=$FACTOR
           fi
         elif [ $FACTOR == 6000 ]; then
           if [ "$COMPARISON" == "smaller" ]; then
-            FACTOR=7000
-            FILESIZE=$SIZE7000
+            if [ $FACTOR -lt $MAXSIZE ]; then
+              FACTOR=7000
+              FILESIZE=$SIZE7000
+            fi
           else
             FACTOR=5000
             FILESIZE=$SIZE5000
+            MAXSIZE=$FACTOR
           fi
         fi
 
