@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v7.06                                         #
+#   VPN connector script v7.07                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -63,6 +63,7 @@ if [ -f $VPNLOCKFILE ]; then
     rm -f $VPNLOCKFILE
   else
     echo -e "\033[1;31mAnother instance of the vpn script is running since $RUNNINGSINCE seconds.\033[0m"
+    echo -e "\033[1;31mUse vpnkill command to kill this instance and retry after that or simply wait.\033[0m"
     MUSTWAIT=`expr $MAXVPNEXECTIME - $RUNNINGSINCE`
     echo "You can restart this script in $MUSTWAIT seconds."
     exit 1
@@ -439,12 +440,18 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
         AUTHFAILED="no"
         RND=`awk -v min=0 -v max=60 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
         let SLEEPDURATION=$((45 + $RETRIESDONE*15 + $RND))
-        echo "Waiting for $SLEEPDURATION seconds to prevent another authentication failure..."
+        echo "Waiting for $SLEEPDURATION seconds to prevent another authentication failure:"
         for i in `seq $SLEEPDURATION`
         do
           sleep 1
-          print "."
+          if [ $(($i%10)) == 0 ]; then
+            echo ". $i seconds so far"
+          else
+            printf "."
+          fi
         done
+        echo
+        echo
       fi
 
     fi
