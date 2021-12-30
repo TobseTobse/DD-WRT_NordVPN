@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Serverconfig conversion script v6.01                               #
+#   Serverconfig conversion script v6.02                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script converts NordVPN OpenVPN files in the ovpn directory   #
@@ -22,7 +22,9 @@ $ignorecountries = explode(",", $ignore);
 
 // regular expression server configs must match to be parsed
 $protocolPattern = "(?:udp|tcp)";
-if (strlen($protocol) == 3) $protocolPattern = $protocol;
+if ($protocol == "tcp" || $protocol == "udp") {
+  $protocolPattern = $protocol;
+}
 $fileMatchPattern = "%^[a-z-]{2,5}\d+?\." . $protocolPattern
                   . "(\d+?)\.ovpn$%i";
 
@@ -37,7 +39,7 @@ if (trim ($html) == "") {
 preg_match_all("%\"([^\"]*?)" . $protocolPattern
              . "(\d+)\.ovpn\"%sim", $html, $hits);
 $withProtocol = "";
-if (strlen($protocol) == 3) {
+if ($protocol == "tcp" || $protocol == "udp") {
   $withProtocol = "with protocol " . strtoupper($protocol) . " ";
 }
 out("Retrieved data for " . count($hits[1]) . " VPN server "
@@ -136,7 +138,7 @@ foreach ($hits as $hit) {
     $myconfigs[] = $filename;
     out("Downloaded server config for " . $configParts[0] . " ("
       . sprintf("%0.2f", 100/$maxServers*++$hasConfigs) . "%).");
-    foreach ($spHits[0] as $downloadedCountry) {
+    foreach ($spHits[1] as $downloadedCountry) {
       $downloaded[$downloadedCountry]++;
     }
   }
