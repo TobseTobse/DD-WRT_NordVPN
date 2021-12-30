@@ -16,4 +16,4 @@ $maxServers = 3333;
 // randomly download either TCP or UPD configuration for a server
 // can be "tcp" or "udp" for only tcp or only udp,
 // "all" for all protocols or "one" for one protocol per server
-$protocol = "udp";
+$protocol = "both";
