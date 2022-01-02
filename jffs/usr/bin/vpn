@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v7.07                                         #
+#   VPN connector script v7.08                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -36,6 +36,31 @@ fi
 # create temporary directory if it doesn't exist yet
 if [ ! -d "$MYTMPDIR" ]; then
   mkdir $MYTMPDIR
+fi
+
+# check file system for faulty flip to read-only mode
+echo Checking $JFFSPATH mount on write access.
+touch $MYTMPDIR/writetest.lock >/dev/null 2>/dev/null
+if [ -f "$MYTMPDIR/writetest.lock" ]; then
+  rm -f $MYTMPDIR/writetest.lock
+  echo -e "\033[1;32mWrite access to USB stick is given.\033[0m"
+else
+
+  # reboot if last reboot was more than ... seconds ago
+  BOOTDIFF=`expr $MINREBOOTPERIOD + 777`
+  if [ -f $LTRFILE ]; then
+    LASTBOOTED=`cat $LTRFILE`
+    BOOTDIFF=`expr $NOWSTAMP - $LASTBOOTED`
+  fi
+  if [ "$BOOTDIFF" -ge "$MINREBOOTPERIOD" ]; then
+    echo -e "\033[1;31mNo write access to USB stick. Reboot initiated.\033[0m"
+    sleep $REBOOTWAIT
+    if [ -f $LTRFILE ]; then
+      rm -f $LTRFILE
+    fi
+    echo $NOWSTAMP >> $LTRFILE
+    reboot
+  fi
 fi
 
 # check if country specified by parameter 1 is disallowed by configuation
