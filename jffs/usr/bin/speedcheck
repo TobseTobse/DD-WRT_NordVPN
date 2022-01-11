@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v5.03                                       #
+#   VPN speed check script v5.04                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -124,6 +124,7 @@ if [ ! -z "$VPNROUTE" ]; then
   if [ "$CURRENTCOUNTRYCODE" == "" ]; then
     # download 10 MB .zip to measure the time it took
     echo Testing against speedtest.wdc01.softlayer.com.
+    echo
     echo Downloading a 10 MB dummy file to measure the download speed.
     RESULT=`time curl -ks -o /dev/null -m 120 http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
 
@@ -182,6 +183,7 @@ if [ ! -z "$VPNROUTE" ]; then
     if [ "$SPEEDSERVER" == "" ]; then
       # download 10 MB .zip to measure the time it took
       echo Testing against speedtest.wdc01.softlayer.com.
+      echo
       echo Downloading a 10 MB dummy file to measure the download speed.
       RESULT=`time curl -ks -o /dev/null -m 120 http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
 
@@ -205,7 +207,7 @@ if [ ! -z "$VPNROUTE" ]; then
 
       for i in `seq 10`
       do
-
+        echo
         echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
 
         # download a random image to measure the time it took
@@ -343,6 +345,7 @@ if [ ! -z "$VPNROUTE" ]; then
     rm -f $STSFILE
   fi
 
+  echo
   if [ "$MEASUREDSPEED" == "" ]; then
     echo -e "\033[1;31mCouldn't measure speed. Maybe test server blocks VPNs.\033[0m"
     if [ -f $STSFILE ]; then
@@ -353,7 +356,7 @@ if [ ! -z "$VPNROUTE" ]; then
 
     AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/${MEASUREMENTS}}")
     if [ "$TOOSLOW" -eq 0 ]; then
-      echo -e "\033[1;37mThis equals an average speed of $AVERAGESPEED Mbit/s.\033[0m"
+      echo -e "\033[1;96mThis equals an average speed of $AVERAGESPEED Mbit/s.\033[0m"
 
       # prepare logging
       CURRENTSERVER=`cat $CURRENTSERVERFILE`

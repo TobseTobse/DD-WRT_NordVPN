@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v7.08                                         #
+#   VPN connector script v8.01                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -102,6 +102,27 @@ RESULT=`command -v curl`
 if [ "$RESULT" == "" ]; then
   CURLSUPPORTED=no
 fi
+
+# count amount of URLs for IP address lookup from config
+AMT=0
+IPADDRESSURLS=$(echo $IPADDRESSURLS | tr "," "\n")
+for IPADDRESSURL in $IPADDRESSURLS ; do
+  let AMT=$AMT+1
+done
+
+# generate a random number for an entry from the IP address lookop URLs
+RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+
+# now pick the according URL from the list of lookup servers
+CNT=0
+for IPADDRESSURL in $IPADDRESSURLS ; do
+  let CNT=$CNT+1
+  if [ $CNT -eq $RND ]; then
+    IPADDRESSURL=http://$IPADDRESSURL
+    break
+  fi
+done
+echo "Public IP address lookup will be done via $IPADDRESSURL."
 
 # get command line parameter
 PARAM1="$1"
@@ -337,6 +358,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   echo
   echo -e "\033[1;37mThis is try #$TRYNUMBER of $MAXTRIES."
   echo -e "Connecting to server $PARAM1.\033[0m"
+  echo
   OLDIP=`wget -t 3 -T 10 -q -O - $IPADDRESSURL`
   NEWIP=$OLDIP
 
@@ -394,6 +416,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   RUNNINGPERIOD=0
   SLEEP=1
   echo "Waiting for the VPN to come up."
+  echo
   while [ $RUNNINGPERIOD -le $CONNECTTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
   do
     sleep $SLEEP
@@ -406,29 +429,31 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
           if [ "$LINE" == "$LASTLOGLINE" ]; then
             FOUNDLINE="yes"
           fi
+          if echo "$LINE" | grep -E 'net_(addr|iface|route)_' > /dev/nul; then
+            echo -e "\033[1;32m$LINE\033[0m"
+          elif echo "$LINE" | grep -E 'TUN/TAP device.*?opened' > /dev/nul; then
+            echo -e "\033[1;32m$LINE\033[0m"
+          elif echo "$LINE" | grep ' OK' > /dev/nul; then
+            echo -e "\033[32m$LINE\033[0m"
+          elif echo "$LINE" | grep -E '(WARNING|NOTE|DEPRECATED)' > /dev/nul; then
+            echo -e "\033[33m$LINE\033[0m"
+          elif echo "$LINE" | grep -E '(AUTH_FAILED|timed out|Restart pause)' > /dev/nul; then
+            echo -e "\033[1;31m$LINE\033[0m"
+          else
+            echo -e "\033[94m$LINE\033[0m"
+          fi
           if [ "$FOUNDLINE" == "yes" ] && [ "$LINE" != "$LASTLOGLINE" ]; then
-            if echo "$LINE" | grep -E '(route|addr).+add' > /dev/nul; then
-              echo -e "\033[1;32m$LINE\033[0m"
-            elif echo "$LINE" | grep 'AUTH_FAILED' > /dev/nul; then
+            if echo "$LINE" | grep 'AUTH_FAILED' > /dev/nul; then
               AUTHFAILED="yes"
               RUNNINGPERIOD=$CONNECTTIMEOUT
-              echo -e "\033[1;31m$LINE\033[0m"
               break
-            elif echo "$LINE" | grep 'Operation timed out' > /dev/nul; then
-              RUNNINGPERIOD=$CONNECTTIMEOUT
-              echo -e "\033[1;31m$LINE\033[0m"
-              break
-            elif echo "$LINE" | grep 'Restart pause' > /dev/nul; then
+            fi
+            if echo "$LINE" | grep -E '(timed out|Restart pause)' > /dev/nul; then
               RUNNINGPERIOD=$CONNECTTIMEOUT
               break
-            else
-              echo -e "\033[1;36m$LINE\033[0m"
             fi
           fi
         done < $VPNLOG
-        if [ "$FOUNDLINE" == "no" ]; then
-          echo -e "\033[1;36m${OPENVPNLOG_NEW}\033[0m"
-        fi
       fi
       OPENVPNLOG_OLD=$OPENVPNLOG_NEW
       LASTLOGLINE=`tail -n1 $VPNLOG`
@@ -464,13 +489,17 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       if [ "$AUTHFAILED" == "yes" ]; then
         AUTHFAILED="no"
         RND=`awk -v min=0 -v max=60 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
-        let SLEEPDURATION=$((45 + $RETRIESDONE*15 + $RND))
+        let SLEEPDURATION=$(($AUTHFAILEDWAIT + $RETRIESDONE*15 + $RND))
         echo "Waiting for $SLEEPDURATION seconds to prevent another authentication failure:"
         for i in `seq $SLEEPDURATION`
         do
           sleep 1
           if [ $(($i%10)) == 0 ]; then
-            echo ". $i seconds so far"
+            printf ". "
+            if [ $i -lt 100 ]; then
+              printf " "
+            fi
+            echo $i seconds so far
           else
             printf "."
           fi
@@ -548,6 +577,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     if [ "$COUNTRYOK" == "yes" ]; then
       echo -e "New geolocation is $CITY in $REGION, $COUNTRY."
       echo -e "Our end service provider is $ISP."
+      echo
       RETRIESDONE=$MAXTRIES
       $SPEEDTESTSCRIPT $1
       if [ -f $VPNLOCKFILE ]; then

@@ -120,21 +120,10 @@ FORCEPROTOCOL=
 # default: $JFFSPATH/servers.dead.log
 DEADLOGFILE=$JFFSPATH/logs/servers.dead.log
 
-# http-URL (mind: NOT https-URL!) to determine public IP address
-# alternatives could be:
-# * http://api.ipify.org
-# * http://checkip.amazonaws.com
-# * http://ip.tyk.nu
-# * http://whatismyip.akamai.com
-# * http://tnx.nl/ip
-# * http://l2.io/ip
-# * http://ident.me
-# * http://wgetip.com
-# * http://bot.whatismyipaddress.com
-# * http://eth0.me
-# * http://ifconfig.me/ip
-# default: http://wgetip.com
-IPADDRESSURL=http://wgetip.com
+# http-URLs (mind: NOT https-URLs!) to determine public IP address,
+# separated by comma
+# default: api.ipify.org,checkip.amazonaws.com,ip.tyk.nu,whatismyip.akamai.com,tnx.nl/ip,l2.io/ip,ident.me,wgetip.com,eth0.me,ifconfig.me/ip
+IPADDRESSURLS=api.ipify.org,checkip.amazonaws.com,ip.tyk.nu,whatismyip.akamai.com,tnx.nl/ip,l2.io/ip,ident.me,wgetip.com,eth0.me,ifconfig.me/ip
 
 # custom ipinfo.io URL (because of wget HTTPS insufficiency)
 # if you want to host the ipinfo proxy scripts yourself please
@@ -155,6 +144,10 @@ COUNTRYNAMESJSONURL=http://country.io/names.json
 # path to lock file
 # default: $MYTMPDIR/vpn.lock
 VPNLOCKFILE=$MYTMPDIR/vpn.lock
+
+# minimum time to wait till retry after authentication failed
+# default: 120
+AUTHFAILEDWAIT=120
 
 ########################################################################
 ##                                                                    ##
