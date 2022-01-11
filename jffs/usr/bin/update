@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v3.03                                                #
+#   Update script v3.04                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -23,7 +23,8 @@ if [ -f "$DIRNAME/myconfig" ]; then
   source $DIRNAME/myconfig
 fi
 
-if [ -f "$DIRNAME/*.update" ]; then
+if test -n "$(find $DIRNAME -name '*.update' -print)"
+then
   echo Deleting orphaned update files
   rm $DIRNAME/*.update
 fi
