@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v8.02                                         #
+#   VPN connector script v8.03                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -431,7 +431,9 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
           fi
           if echo "$LINE" | grep -E 'net_(addr|iface|route)_' > /dev/nul; then
             echo -e "\033[1;32m$LINE\033[0m"
-          elif echo "$LINE" | grep -E 'TUN/TAP device.*?opened' > /dev/nul; then
+          elif echo "$LINE" | grep -E 'TUN/TAP' > /dev/nul; then
+            echo -e "\033[1;32m$LINE\033[0m"
+          elif echo "$LINE" | grep -E '/sbin/(ifconfig|route add)' > /dev/nul; then
             echo -e "\033[1;32m$LINE\033[0m"
           elif echo "$LINE" | grep ' OK' > /dev/nul; then
             echo -e "\033[32m$LINE\033[0m"
