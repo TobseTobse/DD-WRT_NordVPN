@@ -36,6 +36,7 @@ update_file() {
   if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 900 ]; then
     echo Replacing file...
     mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
+    chmod 777 $DIRNAME/${FILENAME}
   fi
   echo Done.
 }
