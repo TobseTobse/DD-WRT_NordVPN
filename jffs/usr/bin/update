@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v3.05                                                #
+#   Update script v3.06                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -36,6 +36,8 @@ update_file() {
   if [ `wc -c "$DIRNAME/$FILENAME.update" | awk '{print $1}'` -gt 900 ]; then
     echo Replacing file...
     mv $DIRNAME/${FILENAME}.update $DIRNAME/${FILENAME}
+    echo Setting executable flag...
+    chmod +x $DIRNAME/${FILENAME}
   fi
   echo Done.
 }
