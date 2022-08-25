@@ -30,7 +30,7 @@ Under no circumstances we can be held responsible or liable in any way for any c
 
 ### Router behind router setup
 
-If you would like to connect your DD-WRT router to another router which is functioning as main router to the internet this step might be of interest for you. If your DD-WRT router is connected to the internet directly you can skip this step.
+If you would like to connect your DD-WRT router to another router which contains a modem to connect to the internet this step might be of interest for you. If your DD-WRT router is connected to the internet directly you can skip this step.
 Connect your DD-WRT router with an ordinary (preferably short) patch cable from its WAN port to one of the free LAN ports of your main router.
 Ensure that the ip ranges of your outer router's network and your inner router's network do not overlap. Best go for 192.168.0.* in the outside network and for 10.0.0.* in the inside network or comparable.
 
@@ -107,7 +107,7 @@ Now let's define an initial VPN server to connect to. In the DD-WRT menu go to _
 Pick one of the server configs you would like to connect to per default to after the router has booted.
 You find these files in the serverconfigs directory.
 
-Read the configuration values from the openvpn.conf file in the server directory you have chosen. Try to match the fields in the **OpenVPN Client** section of the DD-WRT administration interface as good as possible with the values from the configuration file. In my case the values look about like this:
+Read the configuration values from the openvpn.conf file in the server directory you have chosen. Try to match the fields in the **OpenVPN Client** section of the DD-WRT administration interface as good as possible with the values from the configuration file. In my case the values look similar to this (values might slightly change with newer DD-WRT releases but this is about the core you need):
 
 - Start OpenVPN Client: Enable
 - Server IP/Name: _get the ip address from the "remote" line in openvpn.conf_
@@ -168,7 +168,7 @@ cd /jffs/usr/bin
 cp config myconfig
 ```
 
-Then modify the _myconfig_ file to your needs. The script collection always includes the _config_ file first. Then, if existent, the _myconfig_ will be included. Therefore all values specified in the _myconfig_ file will override the ones from the _config_ file automatically. If you don't specify a value in the _myconfig_ file, it will have the default value from the _config_. So usually the _myconfig_ is either not existent or just contains the `#!/bin/sh` header and a few other lines with settings you would like to override.
+Then modify the _myconfig_ file to your needs. The script collection always includes the _config_ file first. Then, if existent, the _myconfig_ will be included. Therefore all values specified in the _myconfig_ file will override the ones from the _config_ file automatically. If you don't specify a value in the _myconfig_ file, it will have the default value from the _config_. So usually the _myconfig_ is either not existent or just contains the `#!/bin/sh` header and a few other lines with settings you would like to override. There's no point in modifying the _config_ file, because it will be automatically overwritten by the update script when the cron demon calls it (usually once per day).
 
 `checkcon`
 
@@ -186,6 +186,18 @@ You can call the script with a parameter: `speedcheck checkonly` doesn't change 
 
 This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca0006tcp` or `vpn nl0053udp`).
 When you call the script with `vpn rnd` it will switch to a randomly selected VPN server from the list in the serverconfigs directory, respecting the rules defined in the configuration to either only connect to a server from a list of desired countries or to avoid connections to a server from a list of specified countries (this is default).
+
+`startup`
+
+This script should be invoked when the router boots up. It's main purpose is to clean up lock files and to start the MAC randomizer if desired.
+
+`randommac`
+
+This script is called by the startup script by default. When executed, it changes the MAC address of the WiFi interface to a randomly generated value. If you hide the SSID of your WiFi, there's no way for Google or other evil forces to reuse your router as an anchor for geolocation or worse. We recommend doing this, regardless if you hide your SSID or not. You could disable this function with a _myconfig_ override if desired.
+
+`update`
+
+This script should be called automatically by the cron demon and updates all scripts in /jffs/usr/bin from GitHub for you (best every night).
 
 
 ### Updating the server configuration files
@@ -210,7 +222,7 @@ Breathe. It's all good. The VPN scripts write the following files into /jffs:
 ### Troubleshooting
 
 - Try removing the kill switch we have added as firewall script. Open a website with a browser being connected to the DD-WRT router. Do you get a result? Then your hardware setup and routing is fine. No result? Dang! Try a different version of DD-WRT. DD-WRT releases are pretty buggy sometimes.
-- Execute a *route* command via Administration > Commands (Diagnostics). Do you see your outer router's network in the list? If not read this manual again. 
+- Execute a *route* command via Administration > Commands (Diagnostics). Do you see your outer router's network in the list? If not read this manual again.
 - Assuming your hardware setup and routing are fine you can put back the kill switch now. Now navigate to Administration > Commands (Diagnostics) in the DD-WRT menu and enter the following command into the "Commands" box: `cat /tmp/openvpncl/openvpn.log` and click on the button "Run Commands" below. Does this help you any further? No? Then ask Google or a friend who knows a bit more about OpenVPN.
 
 

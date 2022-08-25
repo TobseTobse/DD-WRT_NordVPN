@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v3.06                                                #
+#   Update script v3.07                                                #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -47,5 +47,6 @@ update_file checkcon
 update_file speedcheck
 update_file vpn
 update_file killvpn
+update_file randommac
 update_file update
 echo -e "\033[1;32mThe update process has finished successfully.\033[0m"
