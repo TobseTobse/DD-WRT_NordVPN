@@ -1,0 +1,27 @@
+#!/bin/sh
+
+########################################################################
+#                                                                      #
+#   WiFi Mac Changer v1.02                                             #
+#   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
+#                                                                      #
+#   This script generates a random MAC address and changes the WiFi    #
+#   adapter's MAC to this. If you hide your WiFi SSID your network     #
+#   can't be reused by Google or other evil forces to geolocate.       #
+########################################################################
+
+# load config
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+source $DIRNAME/config
+if [ -f "$DIRNAME/myconfig" ]; then
+  source $DIRNAME/myconfig
+fi
+
+MAC=$(hexdump -n6 -e '/1 ":%02X"' /dev/random)
+MAC=${MAC:1}
+ifconfig $WIFIINTERFACE down
+sleep 1
+ifconfig $WIFIINTERFACE hw ether $MAC > /dev/null 2>&1
+sleep 1
+ifconfig $WIFIINTERFACE up
+echo "Changed $WIFIINTERFACE MAC address to $MAC."

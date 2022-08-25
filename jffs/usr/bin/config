@@ -233,6 +233,21 @@ MAXFAILS=5
 
 ########################################################################
 ##                                                                    ##
+## randommac script config                                            ##
+##                                                                    ##
+########################################################################
+
+# WiFi interface name
+# default: eth2
+WIFIINTERFACE=eth2
+
+# change Wifi MAC address to random address on startup
+# default: no
+RANDOMMACONSTARTUP=no
+
+
+########################################################################
+##                                                                    ##
 ## update config                                                      ##
 ##                                                                    ##
 ########################################################################
