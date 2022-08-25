@@ -21,13 +21,13 @@ If there is no User Pass Authentication in the OpenVPN client get a different ve
 You will also need a USB memory stick. Get the cheapest you can find at your local supplier, that will do. Size doesn't matter ;-)
 Last but not least you need a user account at [NordVPN](https://nordvpn.com) composed of username and password.
 
+**Make sure you have erased your NVRAM after installing or upgrading DD-WRT or your router might behave weird afer some time.**
+
 
 ### Disclaimer
 
 With end of 2020 we have officially stopped supporting routers which cannot run curl on the DD-WRT command line interface. The trouble caused by websites like GitHub which enforce HTTPS was just too big to to solved on the long term run.
 Under no circumstances we can be held responsible or liable in any way for any claims, damages, losses, expenses, costs or liabilities whatsoever. It is not likely that the software would cause any damage but we trust in your common sense and technical understanding to use the scripts in a responsible way. Do not put them in the microwave, do not shortcut, do not try to explode things with it.
-
-**Make sure you have erased your NVRAM after installing or upgrading DD-WRT or your router might behave weird afer some time.**
 
 
 ### Router behind router setup
