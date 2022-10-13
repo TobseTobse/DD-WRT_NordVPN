@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v8.03                                         #
+#   VPN connector script v8.04                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -88,7 +88,7 @@ if [ -f $VPNLOCKFILE ]; then
     rm -f $VPNLOCKFILE
   else
     echo -e "\033[1;31mAnother instance of the vpn script is running since $RUNNINGSINCE seconds.\033[0m"
-    echo -e "\033[1;31mUse vpnkill command to kill this instance and retry after that or simply wait.\033[0m"
+    echo -e "\033[1;31mUse killvpn command to kill this instance and retry after that or simply wait.\033[0m"
     MUSTWAIT=`expr $MAXVPNEXECTIME - $RUNNINGSINCE`
     echo "You can restart this script in $MUSTWAIT seconds."
     exit 1
