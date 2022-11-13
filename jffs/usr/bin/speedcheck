@@ -2,13 +2,14 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v5.04                                       #
+#   VPN speed check script v6.01                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
-#   This script must be located on a USB stick, mounted on /jffs and   #
-#   expects the presence of /jffs/usr/bin/vpn. All scripts must be     #
-#   "chmod ugo+x" in order to be executable. You might wanna call it   #
-#   by cron similar to that (mind "root" in the following line):       #
+#   This script must be located on an external storage, mounted on     #
+#   /jffs and expects the presence of /jffs/usr/bin/vpn. All scripts   #
+#   must be "chmod ugo+x" in order to be executable. You might wanna   #
+#   call it by cron similar to that (the "root" in the following       #
+#   line is necessary in many DD-WRT releases):                        #
 #   */15 * * * * root /jffs/usr/bin/speedtest 2>&1                     #
 #                                                                      #
 ########################################################################
@@ -39,7 +40,7 @@ echo Checking $JFFSPATH mount on write access.
 touch $MYTMPDIR/writetest.lock >/dev/null 2>/dev/null
 if [ -f "$MYTMPDIR/writetest.lock" ]; then
   rm -f $MYTMPDIR/writetest.lock
-  echo -e "\033[1;32mWrite access to USB stick is given.\033[0m"
+  echo -e "\033[1;32mWrite access to external storage is given.\033[0m"
 else
 
   # reboot if last reboot was more than ... seconds ago
@@ -49,7 +50,7 @@ else
     BOOTDIFF=`expr $NOWSTAMP - $LASTBOOTED`
   fi
   if [ "$BOOTDIFF" -ge "$MINREBOOTPERIOD" ]; then
-    echo -e "\033[1;31mNo write access to USB stick. Reboot initiated.\033[0m"
+    echo -e "\033[1;31mNo write access to external storage. Reboot initiated.\033[0m"
     sleep $REBOOTWAIT
     if [ -f $LTRFILE ]; then
       rm -f $LTRFILE
@@ -58,6 +59,12 @@ else
     reboot
   fi
 fi
+
+# get fastest measured speed ever
+if [ ! -f "$JFFSPATH/$FASTEDSPEEDFILE" ]; then
+  echo 1 > $JFFSPATH/$FASTEDSPEEDFILE
+fi
+FASTESTSPEED=`cat $JFFSPATH/$FASTEDSPEEDFILE`
 
 # define file sizes for speed test pixels
 SIZE500=505544
@@ -227,6 +234,23 @@ if [ ! -z "$VPNROUTE" ]; then
           let MEASUREMENTS=$MEASUREMENTS+1
           echo -e "\033[1;37mDownload speed #$i was $MEASUREDSPEED Mbit/s.\033[0m"
           TOOSLOW=0
+        fi
+
+        # check if speed is realistic
+        TESTSPEED=`echo $FASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
+        COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ts=$TESTSPEED '{if (ms>ts) printf ("greater"); else printf ("smaller");}'`
+        if [ "$COMPARISON" == "greater" ]; then
+          echo -e "\033[1;31mMeasured speed seems unrealistic.\033[0m"
+          sleep 3
+          i=0
+          continue
+        fi
+
+        # update maximum speed measured ever if necessary
+        COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v fs=$FASTESTSPEED '{if (ms>fs) printf ("greater"); else printf ("smaller");}'`
+        if [ "$COMPARISON" == "greater" ]; then
+          echo $MEASUREDSPEED > $JFFSPATH/$FASTEDSPEEDFILE
+          FASTESTSPEED=$MEASUREDSPEED
         fi
 
         # dynamic up- or downscaling of download size

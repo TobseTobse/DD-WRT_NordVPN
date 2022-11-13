@@ -8,10 +8,11 @@
 #   This script must be located in the same folder as the vpn,         #
 #   speedcheck and checkcon scripts.                                   #
 #                                                                      #
-#   If you want to override it, make a copy named "myconfig" of it     #
-#   and place it in the same folder as this script, then modify the    #
-#   settings in myconfig to your personal needs.                       #
+#   WARNING:                                                           #
 #                                                                      #
+#   If you want to override this config, make a copy named "myconfig"  #
+#   of it and place this copy in the same folder as this script, then  #
+#   modify the settings in myconfig to your personal needs.            #
 #                                                                      #
 ########################################################################
 
@@ -23,20 +24,18 @@
 ########################################################################
 
 # top directory of scripts
-# default: /jffs
 JFFSPATH=/jffs
 
 # log script calls to log file (yes or no)
-# default: no
 LOGGING=no
+
+# general log file
 GENERALLOG=$JFFSPATH/logs/general.log
 
 # temporary directory for lock files etc
-# default: $JFFSPATH/tmp
 MYTMPDIR=$JFFSPATH/tmp
 
 # wait this amount of seconds before executing a reboot
-# default: 60
 REBOOTWAIT=60
 
 
@@ -47,27 +46,21 @@ REBOOTWAIT=60
 ########################################################################
 
 # define VPN interface (see "route -n" when connected)
-# default: tun1
 VPNINTERFACE=tun1
 
 # directory containing the prepared VPN configuration files
-# default: $JFFSPATH/serverconfigs
 CONFIGFILESDIR=$JFFSPATH/serverconfigs
 
 # path to file containing the name of the current server
-# default: $JFFSPATH/currentserver
 CURRENTSERVERFILE=$JFFSPATH/currentserver
 
 # path to file containing the name of the current country
-# default: $JFFSPATH/currentcountry
 CURRENTCOUNTRYFILE=$JFFSPATH/currentcountry
 
 # name of JSON file with countries shortcuts
-# default: countries.json
 COUNTRIESJSON=countries.json
 
 # path to speed test script
-# default: $JFFSPATH/usr/bin/speedcheck
 SPEEDTESTSCRIPT=$JFFSPATH/usr/bin/speedcheck
 
 # path to openVPN log file
@@ -75,54 +68,43 @@ VPNLOG=/tmp/openvpncl/openvpn.log
 
 # check maximum server load (yes or no)
 # (this setting is considered experimental)
-# default: no
 CHECKMAXLOAD=no
 
 # for random servers try to stay below this server load in percent
 # (this only applies if USEMAXLOAD is set to "yes")
-# default: 50
 MAXLOAD=50
 
 # maximum execution time of VPN script in seconds
-# default: 600
 MAXVPNEXECTIME=600
 
 # exit node connection timeout in seconds (approximate)
-# default: 20
 CONNECTTIMEOUT=20
 
 # timeout in approximate seconds to wait
 # for old VPN connection to drop
-# default: 59
 DROPTIMEOUT=59
 
 # maximum connection retries before reboot
-# default: 10
 MAXTRIES=10
 
 # countries to ignore when connection to a random exit node,
 # separated by comma (e.g. countries known for mass surveillance)
-# default: "at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
 
 # exclusive list of countries to connect to (don't connect to any
 # other countries than to these in this comma separated list)
 # syntax is like in IGNORECOUNTRIES
-# default:
 EXCLUSIVECOUNTRIES=
 
 # force UDP or TCP protocol for "speedcheck rnd" command
 # could either be "tcp" or "udp" or nothing (pure random)
-# default:
 FORCEPROTOCOL=
 
 # log servers which couldn't be connected to
-# default: $JFFSPATH/servers.dead.log
 DEADLOGFILE=$JFFSPATH/logs/servers.dead.log
 
 # http-URLs (mind: NOT https-URLs!) to determine public IP address,
 # separated by comma
-# default: api.ipify.org,checkip.amazonaws.com,ip.tyk.nu,whatismyip.akamai.com,tnx.nl/ip,l2.io/ip,ident.me,wgetip.com,eth0.me,ifconfig.me/ip
 IPADDRESSURLS=api.ipify.org,checkip.amazonaws.com,ip.tyk.nu,whatismyip.akamai.com,tnx.nl/ip,l2.io/ip,ident.me,wgetip.com,eth0.me,ifconfig.me/ip
 
 # custom ipinfo.io URL (because of wget HTTPS insufficiency)
@@ -130,23 +112,18 @@ IPADDRESSURLS=api.ipify.org,checkip.amazonaws.com,ip.tyk.nu,whatismyip.akamai.co
 # change this value to your address. The following scripts are expected
 # at this site, forwarding ipinfo.io requests:
 # city, country, ip, org, region
-# default: https://ipinfo.io
 IPINFOURL=https://ipinfo.io
 
 # proxy or real URL for NordVPN servers
-# default: https://api.nordvpn.com/server
 SERVERLISTURL=https://api.nordvpn.com/server
 
 # country names JSON URL
-# default: http://country.io/names.json
 COUNTRYNAMESJSONURL=http://country.io/names.json
 
 # path to lock file
-# default: $MYTMPDIR/vpn.lock
 VPNLOCKFILE=$MYTMPDIR/vpn.lock
 
 # minimum time to wait till retry after authentication failed
-# default: 120
 AUTHFAILEDWAIT=120
 
 ########################################################################
@@ -156,60 +133,54 @@ AUTHFAILEDWAIT=120
 ########################################################################
 
 # minimum speed in Mbit/s you expect from the VPN connection
-# default: 6
 MINIMUMSPEED=6
 
 # minimum time in seconds between two reboots
-# default: 300
 MINREBOOTPERIOD=300
 
 # path to VPN script
-# default: $JFFSPATH/usr/bin/vpn
 VPNSCRIPT=$JFFSPATH/usr/bin/vpn
 
 # path to connection check script
-# default: $JFFSPATH/usr/bin/checkcon
 CCSCRIPT=$JFFSPATH/usr/bin/checkcon
 
 # path to file containing the name of the current server
-# default: $JFFSPATH/currentserver
 CURRENTSERVERFILE=$JFFSPATH/currentserver
 
 # path to file containing the name of the current country
-# default: $JFFSPATH/currentcountry
 CURRENTCOUNTRYFILE=$JFFSPATH/currentcountry
 
 # directory containing the prepared VPN configuration files
-# default: $JFFSPATH/serverconfigs
 CONFIGFILESDIR=$JFFSPATH/serverconfigs
 
 # log server speeds equal or higher than minimum speed to this file
-# default: $JFFSPATH/servers.good.log
 GOODLOGFILE=$JFFSPATH/logs/servers.good.log
 
 # log server speeds lower than minimum speed to this file
-# default: $JFFSPATH/servers.bad.log
 BADLOGFILE=$JFFSPATH/logs/servers.bad.log
 
 # path to speedcheck started time file
-# default: $JFFSPATH/ststarted
 STSFILE=$MYTMPDIR/ststarted.lock
 
 # path to last time rebooted file
-# default: $MYTMPDIR/lastreboot
 LTRFILE=$MYTMPDIR/lastreboot.lock
 
 # URL for speed test servers in XML format
-# default: http://c.speedtest.net/speedtest-servers-static.php
 STXMLURL=http://c.speedtest.net/speedtest-servers-static.php
 
 # path to speedtest server XML
-# default: $JFFSPATH/speedtestservers.xml
 XMLFILE=$JFFSPATH/speedtestservers.xml
 
 # update server XML not more than once in that many minutes
-# default: 180
 XMLUPDATEMINUTES=180
+
+# fastest download speed ever measured file
+FASTEDSPEEDFILE=fastestspeed
+
+# measured speed must be lower than fastest speed measureed ever
+# multipled by this in order to be recognized as a realistic
+# measurement
+SPEEDMULTIPLIER=25
 
 
 ########################################################################
@@ -219,15 +190,12 @@ XMLUPDATEMINUTES=180
 ########################################################################
 
 # server name to ping (please use a server name, not an IP here)
-# default: wikipedia.org
 PINGSERVER=wikipedia.org
 
 # amount of pings to test
-# default: 10
 PINGTRIES=10
 
 # maximum amount of failed pings during test
-# default: 5
 MAXFAILS=5
 
 
@@ -238,11 +206,9 @@ MAXFAILS=5
 ########################################################################
 
 # WiFi interface name
-# default: eth2
 WIFIINTERFACE=eth2
 
 # change Wifi MAC address to random address on startup
-# default: yes
 RANDOMMACONSTARTUP=yes
 
 
@@ -253,5 +219,4 @@ RANDOMMACONSTARTUP=yes
 ########################################################################
 
 # GitHub Master URL
-# default: https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
 GITHUBURL=https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master

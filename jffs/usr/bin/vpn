@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v8.04                                         #
+#   VPN connector script v9.01                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -160,13 +160,14 @@ fi
 
 # read local servers list outside of loop
 if [ "$1" == "rnd" ] || [ ${#1} -eq 2 ]; then
-  echo Reading locally stored servers list...
+  echo -n Reading locally stored servers list...
   SERVERDIRS=`find $CONFIGFILESDIR/ -type d`
   AMTSERVERS=0
   for SERVERDIR in $SERVERDIRS ; do
     let AMTSERVERS=$AMTSERVERS+1
   done
-  echo Got $AMTSERVERS potential servers to connect to.
+  echo
+  echo -e "\033[1;32mGot $AMTSERVERS potential servers to connect to.\033[0m"
 
   # filter servers by country if two characters were stated
   if [ ${#1} -eq 2 ]; then
@@ -192,23 +193,20 @@ if [ "$1" == "rnd" ] || [ ${#1} -eq 2 ]; then
       exit 1
     fi
   fi
-
 fi
 
 if [ "$CHECKMAXLOAD" == "yes" ]; then
 
   # read NordVPN servers list (realtime data)
-  # if we're already connected to the VPN
   SERVERSJSON=
-  VPNROUTE=`route -n | grep $VPNINTERFACE`
-  if [ "$VPNROUTE" != "" ]; then
-    if [ "$CURLSUPPORTED" == "yes" ]; then
-      SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
-    else
-      SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
-    fi
+  echo -n Updating list with load percentages...
+  if [ "$CURLSUPPORTED" == "yes" ]; then
+    SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
+  else
+    SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
   fi
 fi
+echo
 
 # recount amount of server config directories
 AMT=0
@@ -227,7 +225,9 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
 
     # loop as long as server is in excluded countries list
     # and not in exclusive countries list
+    echo -n Finding a server matching the given criteria
     while : ; do
+      echo -n .
 
       # initialize loop
       WRONGPROTOCOL=no
@@ -286,20 +286,6 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
           # and find current exit node
           SERVERINFO=
           if [ "$CHECKMAXLOAD" == "yes" ] && [ "$CORRECTCOUNTRY" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
-
-            # read NordVPN servers list (realtime data)
-            # if we're already connected to the VPN
-            echo Downloading serverlist with load percentages...
-            SERVERSJSON=
-            VPNROUTE=`route -n | grep $VPNINTERFACE`
-            if [ "$VPNROUTE" != "" ]; then
-              if [ "$CURLSUPPORTED" == "yes" ]; then
-                SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
-              else
-                SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
-              fi
-            fi
-
             TOPARSER="$SERVER|$SERVERSJSON"
             SERVERINFO=`echo $TOPARSER|php -nr '
               $input = explode("|", fgets(STDIN));
@@ -331,12 +317,15 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
                   exit;
                 }
               }'`
+            SERVERLOAD=`echo $SERVERINFO | grep -E -o 'Load: ([0-9]+)'`
+            SERVERLOAD=`echo $SERVERLOAD | grep -E -o '([0-9]+)'`
             if [ "$SERVERINFO" != "" ]; then
-              SERVERLOAD=`echo $SERVERINFO | grep -E -o 'Load: ([0-9]+)'`
-              COMPARISON=`echo | awk -v sl=$SERVERLOAD -v ma=$MAXLOAD '{if (sl>ma) printf ("greater"); else printf ("smaller");}'`
+              COMPARISON=`echo | awk -v sl=0$SERVERLOAD -v ma=$MAXLOAD '{if (sl>ma) printf ("greater"); else printf ("smaller");}'`
               if [ "$COMPARISON" == "greater" ]; then
                 LOADISOKAY=no
               fi
+            else
+              LOADISOKAY=no
             fi
           fi
         fi
@@ -346,6 +335,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   fi
 
   # show server information to user
+  echo
   if [ "$CHECKMAXLOAD" == "yes" ] && [ "$SERVERINFO" != "" ]; then
     echo
     echo -e "\033[1;32mServer $SERVER fulfills maximum load rule ($SERVERLOAD% <= $MAXLOAD%).\033[0m"
@@ -365,7 +355,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   # check if we're connected to the VPN
   VPNROUTE=`route -n | grep $VPNINTERFACE`
   if [ "$VPNROUTE" == "" ]; then
-    echo -e "\033[1;31mWe're not connected to the VPN.\033[0m"
+    echo -e "\033[33mWe're not connected to the VPN.\033[0m"
   else
 
     # display current public IPv4
@@ -417,6 +407,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   SLEEP=1
   echo "Waiting for the VPN to come up."
   echo
+  echo OpenVPN connection log:
   while [ $RUNNINGPERIOD -le $CONNECTTIMEOUT ] && [ "$NEWIP" == "$OLDIP" ]
   do
     sleep $SLEEP
@@ -437,6 +428,8 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
             echo -e "\033[1;32m$LINE\033[0m"
           elif echo "$LINE" | grep ' OK' > /dev/nul; then
             echo -e "\033[32m$LINE\033[0m"
+          elif echo "$LINE" | grep 'Initialization Sequence Completed' > /dev/nul; then
+            echo -e "\033[1;32m$LINE\033[0m"
           elif echo "$LINE" | grep -E '(WARNING|NOTE|DEPRECATED)' > /dev/nul; then
             echo -e "\033[33m$LINE\033[0m"
           elif echo "$LINE" | grep -E '(AUTH_FAILED|timed out|Restart pause)' > /dev/nul; then
@@ -448,11 +441,11 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
             if echo "$LINE" | grep 'AUTH_FAILED' > /dev/nul; then
               AUTHFAILED="yes"
               RUNNINGPERIOD=$CONNECTTIMEOUT
-              break
+              break 2
             fi
             if echo "$LINE" | grep -E '(timed out|Restart pause)' > /dev/nul; then
               RUNNINGPERIOD=$CONNECTTIMEOUT
-              break
+              break 2
             fi
           fi
         done < $VPNLOG
@@ -492,7 +485,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
         AUTHFAILED="no"
         RND=`awk -v min=0 -v max=60 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
         let SLEEPDURATION=$(($AUTHFAILEDWAIT + $RETRIESDONE*15 + $RND))
-        echo "Waiting for $SLEEPDURATION seconds to prevent another authentication failure:"
+        echo -e "Waiting for \033[1;37m$SLEEPDURATION\033[0m seconds to prevent another authentication failure:"
         for i in `seq $SLEEPDURATION`
         do
           sleep 1
@@ -537,15 +530,15 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
       REGION=`wget -t 3 -T 10 -q -O - $IPINFOURL/region`
     fi
     if [ "$REGION" == "" ]; then
-      REGION="an region unknown"
+      REGION="an unknown region"
     fi
     if [ "$CURLSUPPORTED" == "yes" ]; then
-      ISPN=$(curl --connect-timeout 3 -ks $IPINFOURL/org)
+      ISP=$(curl --connect-timeout 3 -ks $IPINFOURL/org)
     else
       ISP=`wget -t 3 -T 10 -q -O - $IPINFOURL/org`
     fi
     if [ "$ISP" == "" ]; then
-      ISP="an unknown ISP"
+      ISP="unknown"
     fi
     if [ "$CURLSUPPORTED" == "yes" ]; then
       COUNTRYCODE=$(curl --connect-timeout 3 -ks $IPINFOURL/country)
@@ -560,7 +553,8 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     if [ "$COUNTRYCODE" == "" ]; then
       COUNTRY="country unknown"
     else
-      if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ]; then
+      if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ] || [[ $(find "countries.json" -mtime +14 -print) ]]; then
+        echo Refreshing $COUNTRIESJSON.
         wget -q $COUNTRYNAMESJSONURL -P $JFFSPATH -O $COUNTRIESJSON
       fi
       COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | grep -E -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | grep -E -o '[^\"]{3,}'`
@@ -577,8 +571,8 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     done
 
     if [ "$COUNTRYOK" == "yes" ]; then
-      echo -e "New geolocation is $CITY in $REGION, $COUNTRY."
-      echo -e "Our end service provider is $ISP."
+      echo -e "New geolocation is $CITY in \033[1;37m$REGION district, $COUNTRY\033[0m."
+      echo -e "The exit node's service provider is $ISP."
       echo
       RETRIESDONE=$MAXTRIES
       $SPEEDTESTSCRIPT $1
