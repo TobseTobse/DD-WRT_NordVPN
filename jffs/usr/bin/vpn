@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v9.01                                         #
+#   VPN connector script v9.02                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -398,7 +398,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   if [ -f $VPNLOG ]; then
     LASTLOGLINE=`tail -n1 $VPNLOG`
   fi
-  openvpn --config /tmp/openvpncl/openvpn.conf --route-up /tmp/openvpncl/route-up.sh --log $VPNLOG --daemon
+  openvpn --config /tmp/openvpncl/openvpn.conf --route-up /tmp/openvpncl/route-up.sh --log $VPNLOG --daemon --auth-nocache --data-ciphers-fallback 'AES-256-CBC' --script-security 2
 
   # wait for new IPv4
   OLDIP=$NEWIP
