@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v6.01                                       #
+#   VPN speed check script v6.02                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on an external storage, mounted on     #
@@ -65,6 +65,7 @@ if [ ! -f "$JFFSPATH/$FASTEDSPEEDFILE" ]; then
   echo 1 > $JFFSPATH/$FASTEDSPEEDFILE
 fi
 FASTESTSPEED=`cat $JFFSPATH/$FASTEDSPEEDFILE`
+ORIGFASTESTSPEED=$FASTESTSPEED
 
 # define file sizes for speed test pixels
 SIZE500=505544
@@ -237,10 +238,12 @@ if [ ! -z "$VPNROUTE" ]; then
         fi
 
         # check if speed is realistic
-        TESTSPEED=`echo $FASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
-        COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ts=$TESTSPEED '{if (ms>ts) printf ("greater"); else printf ("smaller");}'`
+        MAXALLOWED=`echo $ORIGFASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
+        COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MAXALLOWED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
         if [ "$COMPARISON" == "greater" ]; then
-          echo -e "\033[1;31mMeasured speed seems unrealistic.\033[0m"
+          echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED seems unrealistic, compared to previus maximum of $ORIGFASTESTSPEED.\033[0m"
+          echo $ORIGFASTESTSPEED > $JFFSPATH/$FASTEDSPEEDFILE
+          FASTESTSPEED=$ORIGFASTESTSPEED
           sleep 3
           i=0
           continue
