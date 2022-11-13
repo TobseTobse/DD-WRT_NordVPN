@@ -218,6 +218,7 @@ Breathe. It's all good. The VPN scripts write the following files into /jffs:
 - *servers.good.log*: a log with measured connection speeds of servers above the configured speed threshold
 - *servers.bad.log*: a log with measured connection speeds of servers below the configured speed threshold
 - *speedtestservers.xml*: this file contains servers via which the connection speed can be measured
+- *fastestspeed*: this file contains the maximum download speed ever measured by the speedcheck script in MBit/s
 - *tmp*: this directory mainly contains lock files. The scripts need them to avoid parallel script executions or boot loops.
 
 
