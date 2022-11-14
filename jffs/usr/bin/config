@@ -220,3 +220,6 @@ RANDOMMACONSTARTUP=yes
 
 # GitHub Master URL
 GITHUBURL=https://raw.githubusercontent.com/TobseTobse/DD-WRT_NordVPN/master
+
+# update scripts on startup
+UPDATEONSTARTUP=yes

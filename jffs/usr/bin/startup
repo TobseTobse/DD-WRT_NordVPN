@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Startup script v3.02                                               #
+#   Startup script v3.03                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2018                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -39,6 +39,11 @@ fi
 # randomize WiFi MAC address
 if [ "$RANDOMMACONSTARTUP" == "yes" ]; then
   randommac
+fi
+
+# update scripts
+if [ "$UPDATEONSTARTUP" == "yes" ]; then
+  update
 fi
 
 # execute speed check
