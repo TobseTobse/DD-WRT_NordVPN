@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v9.03                                         #
+#   VPN connector script v9.04                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -64,7 +64,7 @@ else
 fi
 
 # check if country specified by parameter 1 is disallowed by configuation
-if [ ${#PARAM1} -ne 2 ]; then
+if [ ${#PARAM1} -ne 2 ] && [ "$1" != "" ]; then
   EXCLUDECOUNTRIES=$(echo $IGNORECOUNTRIES | tr "," "\n")
   INCLUDECOUNTRIES=$(echo $EXCLUSIVECOUNTRIES | tr "," "\n")
   for i in $EXCLUDECOUNTRIES
