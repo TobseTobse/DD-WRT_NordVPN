@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v9.04                                         #
+#   VPN connector script v9.05                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -119,7 +119,10 @@ for IPADDRESSURL in $IPADDRESSURLS ; do
   let CNT=$CNT+1
   if [ $CNT -eq $RND ]; then
     IPADDRESSURL=http://$IPADDRESSURL
-    break
+    MYIP=`wget -t 3 -T 10 -q -O - $IPADDRESSURL`
+    if [ $? -eq 0 ]; then
+      break
+    fi
   fi
 done
 echo "Public IP address lookup will be done via $IPADDRESSURL."
