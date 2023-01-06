@@ -105,7 +105,7 @@ DEADLOGFILE=$JFFSPATH/logs/servers.dead.log
 
 # http-URLs (mind: NOT https-URLs!) to determine public IP address,
 # separated by comma
-IPADDRESSURLS=api.ipify.org,checkip.amazonaws.com,ip.tyk.nu,whatismyip.akamai.com,tnx.nl/ip,l2.io/ip,ident.me,wgetip.com,eth0.me,ifconfig.me/ip
+IPADDRESSURLS=api.ipify.org,checkip.amazonaws.com,ip.tyk.nu,whatismyip.akamai.com,l2.io/ip,ident.me,wgetip.com,eth0.me,ifconfig.me/ip
 
 # custom ipinfo.io URL (because of wget HTTPS insufficiency)
 # if you want to host the ipinfo proxy scripts yourself please
