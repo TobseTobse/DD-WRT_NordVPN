@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v9.05                                         #
+#   VPN connector script v9.06                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -556,7 +556,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     if [ "$COUNTRYCODE" == "" ]; then
       COUNTRY="country unknown"
     else
-      if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ] || [[ $(find "countries.json" -mtime +14 -print) ]]; then
+      if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ] || [[ $(find "$JFFSPATH/$COUNTRIESJSON" -mtime +14 -print) ]]; then
         echo Refreshing $COUNTRIESJSON.
         wget -q $COUNTRYNAMESJSONURL -P $JFFSPATH -O $COUNTRIESJSON
       fi
