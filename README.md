@@ -106,10 +106,9 @@ chmod ugo+x *
 ```
 
 Now let's define an initial VPN server to connect to. In the DD-WRT menu go to _Services > VPN_.
-Pick one of the server configs you would like to connect to per default to after the router has booted.
-You find these files in the serverconfigs directory.
+Pick one of the server configs you can download from [NordVPN](https://nordvpn.com/ovpn).
 
-Read the configuration values from the openvpn.conf file in the server directory you have chosen. Try to match the fields in the **OpenVPN Client** section of the DD-WRT administration interface as good as possible with the values from the configuration file. In my case the values look similar to this (values might slightly change with newer DD-WRT releases but this is about the core you need):
+Read the configuration values from the configuration file you have downloaded. Try to match the fields in the **OpenVPN Client** section of the DD-WRT administration interface as good as possible with the values from the configuration file. In my case the values look similar to this (values might slightly change with newer DD-WRT releases but this is about the core you need):
 
 - Start OpenVPN Client: Enable
 - Server IP/Name: _get the ip address from the "remote" line in openvpn.conf_
@@ -132,8 +131,8 @@ Read the configuration values from the openvpn.conf file in the server directory
 - Tunnel UDP Fragment: _leave empty_
 - Tunnel UDP MSS-Fix: Disable
 - nsCertType verification: nope
-- TLS Auth Key: _copy & paste the content of the ta.key file in the chosen serverconfig directory_
-- CA Cert: _copy & paste the content of the ca.crt file in the chosen serverconfig directory_
+- TLS Auth Key: _copy & paste the hexadecimal content from the section "OpenVPN static key" in the configuration file
+- CA Cert: _copy & paste the whole certificate from the section "CERTIFICATE" in the configuration file
 
 For all other fields not mentioned above: _leave empty or unchanged_.
 Just bear in mind that NordVPN can change these values at any time (they have done that already) and that it's always better to match the values yourself manually than taking my values.
@@ -186,8 +185,11 @@ You can call the script with a parameter: `speedcheck checkonly` doesn't change 
 
 `vpn {server shortcut}`
 
-This script switches the VPN server to one of the servers in the serverconfigs directory (e.g. `vpn ca0006tcp` or `vpn nl0053udp`).
-When you call the script with `vpn rnd` it will switch to a randomly selected VPN server from the list in the serverconfigs directory, respecting the rules defined in the configuration to either only connect to a server from a list of desired countries or to avoid connections to a server from a list of specified countries (this is default).
+This script switches the VPN server (e.g. `vpn nl946` or `vpn mx91`). If you call the script with `vpn rnd` it will switch to a randomly selected VPN server from the list NordVPN provides, respecting the rules defined in the configuration to either only connect to a server from a list of desired countries or to avoid connections to a server from a list of specified countries (this is default). If you prefer to connect to a random server in a dedicated country, use the two letter domain code of the country as parameter (e.g. `vpn jp` or `vpn mx`).
+
+`killvpn`
+
+This script stops all other scripts and removes the lock for the vpn connection script. It might be necessary to call this before calling for instance the vpn connection script, if you have canceled another script before with CTRL+C or if this other script has stopped running unexptectedly for another reason.
 
 `startup`
 
