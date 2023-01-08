@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v10.01                                        #
+#   VPN connector script v10.02                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -394,12 +394,10 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   echo "Downloading configuration for server $SERVER."
   PROTOCOL=tcp
   PORT=443
-  if [ "$2" != "" ]; then
-    PROTOCOL=`echo "$2" | awk '{print tolower($0)}'`
-  fi
   if [ "$FORCEPROTOCOL" != "" ]; then
     PROTOCOL=$FORCEPROTOCOL
   fi
+  PROTOCOL=`echo "$PROTOCOL" | awk '{print tolower($0)}'`
   if [ "$PROTOCOL" == "udp" ]; then
     PORT=1194
   fi
