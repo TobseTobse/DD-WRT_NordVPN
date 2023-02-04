@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v10.02                                        #
+#   VPN connector script v10.03                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -91,7 +91,10 @@ done
 echo "Public IP address lookup will be done via $IPADDRESSURL."
 
 # update the NordVPN servers file if it is outdated
-if [[ ! -f "$SERVERSLISTFILE" ]] || [[ $(find "$SERVERSLISTFILE" -mtime +1 -print) ]]; then
+if [ -f "$SERVERSLISTFILE" ] && [ -s "$SERVERSLISTFILE" ]; then
+  rm $SERVERSLISTFILE
+fi
+if [ ! -f "$SERVERSLISTFILE" ] || [ $(find "$SERVERSLISTFILE" -mtime +1 -print) ]; then
 
   # download OVPN files list from NordVPN
   if [ "$CURLSUPPORTED" == "yes" ]; then
@@ -216,7 +219,7 @@ fi
 echo
 
 RETRIESDONE=0
-while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
+while [ $RETRIESDONE -lt $MAXTRIES ]; do
 
   # if parameter 1 is "rnd" user wants a random server
   # read server configurations
@@ -384,7 +387,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
   fi
 
   # display current public IPv4
-  if [[ -z "${NEWIP// }" ]]; then
+  if [ -z "${NEWIP// }" ]; then
     echo -e "\033[1;31mCurrent public IPv4 couldn't be determined.\033[0m"
   else
     echo Current public IPv4 is $NEWIP
@@ -574,7 +577,7 @@ while [[ $RETRIESDONE -lt $MAXTRIES ]]; do
     if [ "$COUNTRYCODE" == "" ]; then
       COUNTRY="country unknown"
     else
-      if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ] || [[ $(find "$JFFSPATH/$COUNTRIESJSON" -mtime +14 -print) ]]; then
+      if [ ! -f "$JFFSPATH/$COUNTRIESJSON" ] || [ $(find "$JFFSPATH/$COUNTRIESJSON" -mtime +14 -print) ]; then
         echo Refreshing $COUNTRIESJSON.
         wget -q $COUNTRYNAMESJSONURL -P $JFFSPATH -O $COUNTRIESJSON
       fi
