@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v10.04                                        #
+#   VPN connector script v10.05                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -424,7 +424,11 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
   if [ -f $VPNLOG ]; then
     LASTLOGLINE=`tail -n1 $VPNLOG`
   fi
-  openvpn --config /tmp/openvpncl/openvpn.conf --auth-user-pass /tmp/openvpncl/credentials --route-up /tmp/openvpncl/route-up.sh --log $VPNLOG --daemon --auth-nocache --script-security 2 --dev $VPNINTERFACE
+  COMPRESSION=
+  if [ "$COMPLZO" == "yes" ]; then
+    COMPRESSION=--comp-lzo
+  fi
+  openvpn --config /tmp/openvpncl/openvpn.conf --auth-user-pass /tmp/openvpncl/credentials --route-up /tmp/openvpncl/route-up.sh --log $VPNLOG --daemon --auth-nocache --script-security 2 --dev $VPNINTERFACE $COMPRESSION
 
   # wait for new IPv4
   OLDIP=$NEWIP
@@ -488,6 +492,7 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
         sleep 5
         NEWIP=`wget -t 5 -T 10 -q -O - $IPADDRESSURL`
         if [ $? -ne 0 ]; then
+          
           echo -e "\033[1;31mIP address lookup failed.\033[0m"
         fi
       fi

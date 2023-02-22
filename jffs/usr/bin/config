@@ -126,6 +126,10 @@ VPNLOCKFILE=$MYTMPDIR/vpn.lock
 # minimum time to wait till retry after authentication failed
 AUTHFAILEDWAIT=120
 
+# enable LZO compression (yes or no)
+COMPLZO=no
+
+
 ########################################################################
 ##                                                                    ##
 ## speedcheck script config                                           ##
