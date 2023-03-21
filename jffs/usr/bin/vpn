@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v10.06                                        #
+#   VPN connector script v10.07                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -323,6 +323,26 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
             fi
           fi
         fi
+      fi
+
+      # remove current server from list with remaining servers
+      if [ -f "$MYTMPDIR/filteredservers.tmp" ]; then
+        rm $MYTMPDIR/filteredservers.tmp
+      fi
+      touch $MYTMPDIR/filteredservers.tmp
+      for i in $SERVERS
+      do
+        echo $i >> $MYTMPDIR/filteredservers.tmp
+      done
+      SERVERS=`cat $MYTMPDIR/filteredservers.tmp | grep -v "$PARAM1"`
+      AMTSERVERS=`echo $SERVERS | wc -w`
+      if [ $AMTSERVERS -lt 1 ]; then
+        if [ -f $VPNLOCKFILE ]; then
+          rm -f $VPNLOCKFILE
+        fi
+        echo
+        echo -e "\033[1;31mNo server matches the specified criteria. Try lowering restrictions in your configuration.\033[0m"
+        exit 1
       fi
     [[ "$WRONGCOUNTRY" == "yes" || "$CORRECTCOUNTRY" == "no" || "$WRONGPROTOCOL" == "yes" || "$LOADISOKAY" == "no" ]] || break
     done
