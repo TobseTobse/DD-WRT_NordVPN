@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v10.05                                        #
+#   VPN connector script v10.06                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -159,7 +159,7 @@ if [ "$PARAM1" == "" ]; then
 fi
 
 # filter servers by country if EXCLUSIVECOUNTRIES are specified
-if [ "$EXCLUSIVECOUNTRIES" != "" ]; then
+if [ "$EXCLUSIVECOUNTRIES" != "" ] && [ "$1" == "rnd" ]; then
   touch $MYTMPDIR/servers.tmp
   touch $MYTMPDIR/exservers.tmp
   for i in $INCLUDECOUNTRIES
@@ -187,11 +187,7 @@ fi
 
 # filter servers by country if two characters were stated
 if [ ${#1} -eq 2 ]; then
-  if [ "$EXCLUSIVECOUNTRIES" != "" ]; then
-    SERVERS=`cat $MYTMPDIR/servers.tmp | grep -e "$1\d"`
-  else
-    SERVERS=`cat $SERVERSLISTFILE | grep -e '$1\d'`
-  fi
+  SERVERS=`cat $SERVERSLISTFILE | grep -e "$1\d"`
   AMTSERVERS=`echo $SERVERS | wc -w`
   echo -e "\033[1;37mParameter \"$1\"\033[0m narrowed down server list to \033[1;37m$AMTSERVERS\033[0m potential connection candidates."
   if [ $AMTSERVERS -lt 1 ]; then
