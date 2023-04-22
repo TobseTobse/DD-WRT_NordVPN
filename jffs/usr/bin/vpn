@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v10.07                                        #
+#   VPN connector script v10.08                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -533,8 +533,8 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
       # prevent another AUTH_FAILED
       if [ "$AUTHFAILED" == "yes" ]; then
         AUTHFAILED="no"
-        RND=`awk -v min=0 -v max=60 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
-        let SLEEPDURATION=$(($AUTHFAILEDWAIT + $RETRIESDONE*15 + $RND))
+        RND=`awk -v min=0 -v max=$MAXWAITAFTERAUTHFAILED 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+        let SLEEPDURATION=$(($AUTHFAILEDWAIT + $RND))
         echo -e "Waiting for \033[1;37m$SLEEPDURATION\033[0m seconds to prevent another authentication failure:"
         for i in `seq $SLEEPDURATION`
         do
