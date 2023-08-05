@@ -25,22 +25,18 @@ fi
 SERVERSLISTFILE=$JFFSPATH/servers.list
 OVPNFILESURL=https://nordvpn.com/de/ovpn/
 
-# check if another instance of the vpn script is running already
-NOWSTAMP=`date "+%s"`
-if [ -f $VPNLOCKFILE ]; then
-  LASTACTIVE=`cat $VPNLOCKFILE`
-  RUNNINGSINCE=`expr $NOWSTAMP - $LASTACTIVE`
-  if [ $RUNNINGSINCE -gt $MAXVPNEXECTIME ]; then
-    rm -f $VPNLOCKFILE
-  else
-    echo -e "\033[1;31mAnother instance of the vpn script is running since $RUNNINGSINCE seconds.\033[0m"
-    MUSTWAIT=`expr $MAXVPNEXECTIME - $RUNNINGSINCE`
-    echo "You can restart this script in $MUSTWAIT seconds."
-    echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait the $MUSTWAIT seconds.\033[0m"
-    exit 1
-  fi
+# exit if there's another instance of this script running
+OTHERPROCESSES=$(ps | awk "/\/bin\/vpn/" | grep -v grep | grep -o "^[0-9]\+")
+CNT=0
+for OTHERPROCESS in $OTHERPROCESSES ; do
+  let CNT=$CNT+1
+done
+COMPARISON=`echo | awk -v op=0$CNT '{if (op>2) printf ("greater"); else printf ("smaller");}'`
+if [ "$COMPARISON" == "greater" ]; then
+  echo -e "\033[1;31mAnother instance of the vpn script is running"
+  echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait the $MUSTWAIT seconds.\033[0m"
+  exit 1
 fi
-echo $NOWSTAMP >> $VPNLOCKFILE
 
 # check if system supports curl command
 CURLSUPPORTED=yes
