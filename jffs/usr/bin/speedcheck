@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v6.03                                       #
+#   VPN speed check script v7.01                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on an external storage, mounted on     #
@@ -13,6 +13,44 @@
 #   */15 * * * * root /jffs/usr/bin/speedtest 2>&1                     #
 #                                                                      #
 ########################################################################
+
+# get a random speed server for the current country
+get_random_speedserver () {
+  SPEEDSERVER=""
+  CNT=0
+  while [ $CNT -le 100 ] && [ "$SPEEDSERVER" == "" ]
+  do
+
+    # get speed test servers for current country
+    SPEEDSERVERS=$(cat $XMLFILE | awk 'gsub(/ /, "___")')
+
+    # count amount of speed servers in this country
+    AMT=0
+    for SPEEDSERVER in $SPEEDSERVERS ; do
+      let AMT=$AMT+1
+    done
+
+    # generate random number
+    # between 1 and amount of server directories
+    RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+
+    # now pick random server from current country's speed servers
+    CNT2=0
+    for SPEEDSERVER in $SPEEDSERVERS ; do
+      let CNT2=$CNT2+1
+      if [ $CNT2 -eq $RND ]; then
+        URL=`echo $SPEEDSERVER | grep -E -o 'url="[^"]+?"' | sed 's|url="||g' | sed 's|/upload\.[^"]*"||gI'`
+      fi
+    done
+    SPEEDSERVER=`echo $URL | sed 's|http://||gI' | sed 's|/.*$||g'`
+    if [ "$SPEEDSERVER" != "https:" ]; then
+      let CNT=$CNT+1
+    fi
+  done
+  if [ "$SPEEDSERVER" == "https:" ]; then
+    SPEEDSERVER=""
+  fi
+}
 
 echo Speed check invoked.
 
@@ -131,7 +169,7 @@ if [ ! -z "$VPNROUTE" ]; then
   # if current country unknown do 10 MB test with softlayer.com
   if [ "$CURRENTCOUNTRYCODE" == "" ]; then
     # download 10 MB .zip to measure the time it took
-    echo Testing against speedtest.wdc01.softlayer.com.
+    echo -e "Testing against \033[1;37mspeedtest.wdc01.softlayer.com\033[0m."
     echo
     echo Downloading a 10 MB dummy file to measure the download speed.
     RESULT=`time curl -ks -o /dev/null -m 120 http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
@@ -157,40 +195,12 @@ if [ ! -z "$VPNROUTE" ]; then
     echo Updating speedtest servers list to get nearby testing servers.
     curl -m 120 -o $XMLFILE -ks $STXMLURL
 
-    # get a random speed server for the current country
     SPEEDSERVER=""
-    CNT=0
-    while [ $CNT -le 100 ] && [ "$SPEEDSERVER" == "" ]
-    do
-
-      # get speed test servers for current country
-      SPEEDSERVERS=$(cat $XMLFILE | awk 'gsub(/ /, "___")')
-
-      # count amount of speed servers in this country
-      AMT=0
-      for SPEEDSERVER in $SPEEDSERVERS ; do
-        let AMT=$AMT+1
-      done
-
-      # generate random number
-      # between 1 and amount of server directories
-      RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
-
-      # now pick random server from current country's speed servers
-      CNT2=0
-      for SPEEDSERVER in $SPEEDSERVERS ; do
-        let CNT2=$CNT2+1
-        if [ $CNT2 -eq $RND ]; then
-          URL=`echo $SPEEDSERVER | grep -E -o 'url="[^"]+?"' | sed 's|url="||g' | sed 's|/upload\.[^"]*"||gI'`
-        fi
-      done
-      SPEEDSERVER=`echo $URL | sed 's|http://||gI' | sed 's|/.*$||g'`
-      let CNT=$CNT+1
-    done
+    get_random_speedserver
 
     if [ "$SPEEDSERVER" == "" ]; then
       # download 10 MB .zip to measure the time it took
-      echo Testing against speedtest.wdc01.softlayer.com.
+      echo -e "Testing against \033[1;37mspeedtest.wdc01.softlayer.com\033[0m".
       echo
       echo Downloading a 10 MB dummy file to measure the download speed.
       RESULT=`time curl -ks -o /dev/null -m 120 http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
@@ -211,7 +221,7 @@ if [ ! -z "$VPNROUTE" ]; then
 
       FACTOR=500
       FILESIZE=$SIZE500
-      echo Testing against $SPEEDSERVER.
+      echo -e "Testing against \033[1;37m$SPEEDSERVER\033[0m."
 
       for i in `seq 10`
       do
@@ -241,9 +251,9 @@ if [ ! -z "$VPNROUTE" ]; then
         MAXALLOWED=`echo $ORIGFASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
         COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MAXALLOWED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
         if [ "$COMPARISON" == "greater" ]; then
-          echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED seems unrealistic, compared to previus maximum of $ORIGFASTESTSPEED.\033[0m"
-          echo $ORIGFASTESTSPEED > $JFFSPATH/$FASTEDSPEEDFILE
-          FASTESTSPEED=$ORIGFASTESTSPEED
+          echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED Mbit/s seems  listic, compared to previus maximum of $ORIGFASTESTSPEED Mbit/s.\033[0m"
+          SPEEDSERVER=""
+          get_random_speedserver
           sleep 3
           i=0
           continue
