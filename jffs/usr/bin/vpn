@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v10.09                                        #
+#   VPN connector script v11.01                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -226,7 +226,6 @@ if [ "$CHECKMAXLOAD" == "yes" ]; then
     SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
   fi
 fi
-echo
 
 RETRIESDONE=0
 while [ $RETRIESDONE -lt $MAXTRIES ]; do
@@ -237,7 +236,8 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
 
     # loop as long as server is in excluded countries list
     # and not in exclusive countries list
-    echo -n Finding a server matching the given criteria
+    echo
+    echo -n Finding a server matching the given criteria...
     while : ; do
       echo -n .
 
@@ -287,6 +287,7 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
 
           # parse NordVPN servers list with PHP
           # and find current exit node
+          echo -n ?
           SERVERINFO=
           if [ "$CHECKMAXLOAD" == "yes" ] && [ "$CORRECTCOUNTRY" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
             TOPARSER="$SERVER|$SERVERSJSON"
@@ -297,29 +298,22 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
                function($hits) {
                  return $hits[1] . (int)$hits[2];
                }, $input[0]);
-              $servers = json_decode($input[1]);
-              if (!is_array($servers)) exit;
-              foreach ($servers as $server) {
-                $regex = "%^" . $exitnode . "\.nordvpn\.com$%";
-                if (preg_match($regex, trim($server->domain))) {
-                  $features = (array)$server->features;
-                  if (is_array($features)) {
-                    foreach ($features as $key => $feature) {
-                      if (trim ($feature) == "") {
-                        unset($features[$key]);
-                      }
-                    }
-                  }
-                  $features = implode(", ", array_keys($features));
-                  $features = str_replace("_", " ", $features);
-                  echo "Full name: " . $server->name . "\n"
-                     . "Latitude: "  . $server->location->lat . "\n"
-                     . "Longitude: " . $server->location->long . "\n"
-                     . "Load: "      . $server->load . "\n"
-                     . "Features: "  . $features;
-                  exit;
+              if (!preg_match("%(.{0,303}\"hostname\"\:\"" . $exitnode . "\.nordvpn\.com\""
+                            . ".+?\"version\"\:.+?\}\}\]\})%sm", $input[1], $hits)) {
+                return;
+              }
+              $part = $hits[1];
+              if (!preg_match("%\}\}\]\},(.+?\}\}\]\})%sm", $part, $hits)) {
+                if (!preg_match("%^\[(.+?\}\}\]\})%sm", $part, $hits)) {
+                  return;
                 }
-              }'`
+              }
+              $server = json_decode($hits[1]);
+              echo "Full name: " . $server->name . "\n"
+                 . "Latitude: "  . $server->locations[0]->latitude . "\n"
+                 . "Longitude: " . $server->locations[0]->longitude . "\n"
+                 . "Load: "      . $server->load;
+              '`
             SERVERLOAD=`echo $SERVERINFO | grep -E -o 'Load: ([0-9]+)'`
             SERVERLOAD=`echo $SERVERLOAD | grep -E -o '([0-9]+)'`
             if [ "$SERVERINFO" != "" ]; then
@@ -360,7 +354,7 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
   # show server information to user
   echo
   if [ "$CHECKMAXLOAD" == "yes" ] && [ "$SERVERINFO" != "" ]; then
-    echo
+    echo !
     echo -e "\033[1;32mServer $SERVER fulfills maximum load rule ($SERVERLOAD% <= $MAXLOAD%).\033[0m"
     echo "$SERVERINFO"
   fi
