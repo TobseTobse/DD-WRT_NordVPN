@@ -115,7 +115,7 @@ IPADDRESSURLS=api.ipify.org,checkip.amazonaws.com,ip.tyk.nu,whatismyip.akamai.co
 IPINFOURL=https://ipinfo.io
 
 # proxy or real URL for NordVPN servers
-SERVERLISTURL=https://api.nordvpn.com/server
+SERVERLISTURL=https://api.nordvpn.com/v1/servers?limit=16384
 
 # country names JSON URL
 COUNTRYNAMESJSONURL=http://country.io/names.json
@@ -191,6 +191,9 @@ FASTEDSPEEDFILE=fastestspeed
 # multipled by this in order to be recognized as a realistic
 # measurement
 SPEEDMULTIPLIER=25
+
+# default speed test URL if country code is unknown
+DEFAULTSPEEDTESTURL=http://speedtest.ehv.vodafone.nl:8080/speedtest
 
 
 ########################################################################

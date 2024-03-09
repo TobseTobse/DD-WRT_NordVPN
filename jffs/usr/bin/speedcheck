@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v7.01                                       #
+#   VPN speed check script v8.01                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on an external storage, mounted on     #
@@ -166,26 +166,10 @@ if [ ! -z "$VPNROUTE" ]; then
   MEASUREMENTS=0
   MAXSIZE=99999
 
-  # if current country unknown do 10 MB test with softlayer.com
+  # if current country is unknown test against default speed test server
   if [ "$CURRENTCOUNTRYCODE" == "" ]; then
-    # download 10 MB .zip to measure the time it took
-    echo -e "Testing against \033[1;37mspeedtest.wdc01.softlayer.com\033[0m."
-    echo
-    echo Downloading a 10 MB dummy file to measure the download speed.
-    RESULT=`time curl -ks -o /dev/null -m 120 http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
-
-    # do some string acrobatics to calculate connection speed...
-    MEASUREDSPEED=""
-    REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
-    MINUTES=`echo $REALTIME | grep -E -o '([0-9\.])+?m'`
-    SECONDS=`echo $REALTIME | grep -E -o '([0-9\.])+?s'`
-    TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-    TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-    if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
-      MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",80/${TOTALSECONDS}}")
-      TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
-      let MEASUREMENTS=$MEASUREMENTS+1
-    fi
+    URL=$DEFAULTSPEEDTESTURL
+    SPEEDSERVER=`echo $URL | sed 's|http://||gI' | sed 's|/.*$||g'`
 
   # otherwise execute much more performant
   # and precise country based test
@@ -197,185 +181,167 @@ if [ ! -z "$VPNROUTE" ]; then
 
     SPEEDSERVER=""
     get_random_speedserver
-
-    if [ "$SPEEDSERVER" == "" ]; then
-      # download 10 MB .zip to measure the time it took
-      echo -e "Testing against \033[1;37mspeedtest.wdc01.softlayer.com\033[0m".
-      echo
-      echo Downloading a 10 MB dummy file to measure the download speed.
-      RESULT=`time curl -ks -o /dev/null -m 120 http://speedtest.wdc01.softlayer.com/downloads/test10.zip 2>&1`
-
-      # do some string acrobatics to calculate connection speed...
-      MEASUREDSPEED=""
-      REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
-      MINUTES=`echo $REALTIME | grep -E -o '([0-9\.])+?m'`
-      SECONDS=`echo $REALTIME | grep -E -o '([0-9\.])+?s'`
-      TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-      TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-      if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
-        MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",80/${TOTALSECONDS}}")
-        TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
-        let MEASUREMENTS=$MEASUREMENTS+1
-      fi
-    else
-
-      FACTOR=500
-      FILESIZE=$SIZE500
-      echo -e "Testing against \033[1;37m$SPEEDSERVER\033[0m."
-
-      for i in `seq 10`
-      do
-        echo
-        echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
-
-        # download a random image to measure the time it took
-        TIMEOUT=10
-        RESULT=`time curl -ks -o /dev/null -m $TIMEOUT $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
-
-        # do string acrobatics to calculate connection speed...
-        MEASUREDSPEED=""
-        REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
-        MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
-        SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
-        TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
-        TOOSLOW=1
-        if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
-          MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
-          TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
-          let MEASUREMENTS=$MEASUREMENTS+1
-          echo -e "\033[1;37mDownload speed #$i was $MEASUREDSPEED Mbit/s.\033[0m"
-          TOOSLOW=0
-        fi
-
-        # check if speed is realistic
-        MAXALLOWED=`echo $ORIGFASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
-        COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MAXALLOWED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
-        if [ "$COMPARISON" == "greater" ]; then
-          echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED Mbit/s seems  listic, compared to previus maximum of $ORIGFASTESTSPEED Mbit/s.\033[0m"
-          SPEEDSERVER=""
-          get_random_speedserver
-          sleep 3
-          i=0
-          continue
-        fi
-
-        # update maximum speed measured ever if necessary
-        COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v fs=$FASTESTSPEED '{if (ms>fs) printf ("greater"); else printf ("smaller");}'`
-        if [ "$COMPARISON" == "greater" ]; then
-          echo $MEASUREDSPEED > $JFFSPATH/$FASTEDSPEEDFILE
-          FASTESTSPEED=$MEASUREDSPEED
-        fi
-
-        # dynamic up- or downscaling of download size
-        COMPARISON=`echo | awk -v ts=$TOTALSECONDS -v ma=5 '{if (ts>ma) printf ("greater"); else printf ("smaller");}'`
-        if [ $FACTOR == 500 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            if [ $FACTOR -lt $MAXSIZE ]; then
-              FACTOR=1000
-              FILESIZE=$SIZE1000
-            fi
-          fi
-        elif [ $FACTOR == 1000 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            if [ $FACTOR -lt $MAXSIZE ]; then
-              FACTOR=2000
-              FILESIZE=$SIZE2000
-            fi
-          else
-            FACTOR=500
-            FILESIZE=$SIZE500
-            MAXSIZE=$FACTOR
-          fi
-        elif [ $FACTOR == 2000 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            if [ $FACTOR -lt $MAXSIZE ]; then
-              FACTOR=2500
-              FILESIZE=$SIZE2500
-            fi
-          else
-            FACTOR=1000
-            FILESIZE=$SIZE1000
-            MAXSIZE=$FACTOR
-          fi
-        elif [ $FACTOR == 2500 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            if [ $FACTOR -lt $MAXSIZE ]; then
-              FACTOR=3000
-              FILESIZE=$SIZE3000
-            fi
-          else
-            FACTOR=2000
-            FILESIZE=$SIZE2000
-            MAXSIZE=$FACTOR
-          fi
-        elif [ $FACTOR == 3000 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            if [ $FACTOR -lt $MAXSIZE ]; then
-              FACTOR=3500
-              FILESIZE=$SIZE3500
-            fi
-          else
-            FACTOR=2500
-            FILESIZE=$SIZE2500
-            MAXSIZE=$FACTOR
-          fi
-        elif [ $FACTOR == 3500 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            if [ $FACTOR -lt $MAXSIZE ]; then
-              FACTOR=4000
-              FILESIZE=$SIZE4000
-            fi
-          else
-            FACTOR=3000
-            FILESIZE=$SIZE3000
-            MAXSIZE=$FACTOR
-          fi
-        elif [ $FACTOR == 4000 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            if [ $FACTOR -lt $MAXSIZE ]; then
-              FACTOR=5000
-              FILESIZE=$SIZE5000
-            fi
-          else
-            FACTOR=3500
-            FILESIZE=$SIZE3500
-            MAXSIZE=$FACTOR
-          fi
-        elif [ $FACTOR == 5000 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            if [ $FACTOR -lt $MAXSIZE ]; then
-              FACTOR=6000
-              FILESIZE=$SIZE6000
-            fi
-          else
-            FACTOR=4000
-            FILESIZE=$SIZE4000
-            MAXSIZE=$FACTOR
-          fi
-        elif [ $FACTOR == 6000 ]; then
-          if [ "$COMPARISON" == "smaller" ]; then
-            if [ $FACTOR -lt $MAXSIZE ]; then
-              FACTOR=7000
-              FILESIZE=$SIZE7000
-            fi
-          else
-            FACTOR=5000
-            FILESIZE=$SIZE5000
-            MAXSIZE=$FACTOR
-          fi
-        fi
-
-        # stop checking if timeout was exceeded
-        MAXTSECONDS=
-        COMPARISON=`echo | awk -v me=$TOTALSECONDS -v mi=9 '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
-        if [ "$COMPARISON" == "greater" ]; then
-          TOOSLOW=1
-          break
-        fi
-      done
-
-    fi
   fi
+
+  if [ "$SPEEDSERVER" == "" ]; then
+    URL=$DEFAULTSPEEDTESTURL
+    SPEEDSERVER=`echo $URL | sed 's|http://||gI' | sed 's|/.*$||g'`
+  fi
+
+  FACTOR=500
+  FILESIZE=$SIZE500
+  echo -e "Testing against \033[1;37m$SPEEDSERVER\033[0m."
+
+  for i in `seq 10`
+  do
+    echo
+    echo Downloading a ${FACTOR}x${FACTOR} pixels random image to measure the download speed.
+
+    # download a random image to measure the time it took
+    TIMEOUT=10
+    RESULT=`time curl -ks -o /dev/null -m $TIMEOUT $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
+
+    # do string acrobatics to calculate connection speed...
+    MEASUREDSPEED=""
+    REALTIME=`echo $RESULT | grep -E -o 'real +?[0-9\.]+?m +?[0-9\.]+?s'`
+    MINUTES=`echo $REALTIME | grep -E -o '[0-9\.]+?m' | grep -E -o '[0-9\.]+?'`
+    SECONDS=`echo $REALTIME | grep -E -o '[0-9\.]+?s' | grep -E -o '[0-9\.]+?'`
+    TOTALSECONDS=$(awk "BEGIN {printf \"%.2f\",${MINUTES}*60+${SECONDS}}")
+    TOOSLOW=1
+    if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
+      MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
+      TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+      let MEASUREMENTS=$MEASUREMENTS+1
+      echo -e "\033[1;37mDownload speed #$i was $MEASUREDSPEED Mbit/s.\033[0m"
+      TOOSLOW=0
+    fi
+
+    # check if speed is realistic
+    MAXALLOWED=`echo $ORIGFASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
+    COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MAXALLOWED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
+    if [ "$COMPARISON" == "greater" ]; then
+      echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED Mbit/s seems  listic, compared to previus maximum of $ORIGFASTESTSPEED Mbit/s.\033[0m"
+      SPEEDSERVER=""
+      get_random_speedserver
+      sleep 3
+      i=0
+      continue
+    fi
+
+    # update maximum speed measured ever if necessary
+    COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v fs=$FASTESTSPEED '{if (ms>fs) printf ("greater"); else printf ("smaller");}'`
+    if [ "$COMPARISON" == "greater" ]; then
+      echo $MEASUREDSPEED > $JFFSPATH/$FASTEDSPEEDFILE
+      FASTESTSPEED=$MEASUREDSPEED
+    fi
+
+    # dynamic up- or downscaling of download size
+    COMPARISON=`echo | awk -v ts=$TOTALSECONDS -v ma=5 '{if (ts>ma) printf ("greater"); else printf ("smaller");}'`
+    if [ $FACTOR == 500 ]; then
+      if [ "$COMPARISON" == "smaller" ]; then
+        if [ $FACTOR -lt $MAXSIZE ]; then
+          FACTOR=1000
+          FILESIZE=$SIZE1000
+        fi
+      fi
+    elif [ $FACTOR == 1000 ]; then
+      if [ "$COMPARISON" == "smaller" ]; then
+        if [ $FACTOR -lt $MAXSIZE ]; then
+          FACTOR=2000
+          FILESIZE=$SIZE2000
+        fi
+      else
+        FACTOR=500
+        FILESIZE=$SIZE500
+        MAXSIZE=$FACTOR
+      fi
+    elif [ $FACTOR == 2000 ]; then
+      if [ "$COMPARISON" == "smaller" ]; then
+        if [ $FACTOR -lt $MAXSIZE ]; then
+          FACTOR=2500
+          FILESIZE=$SIZE2500
+        fi
+      else
+        FACTOR=1000
+        FILESIZE=$SIZE1000
+        MAXSIZE=$FACTOR
+      fi
+    elif [ $FACTOR == 2500 ]; then
+      if [ "$COMPARISON" == "smaller" ]; then
+        if [ $FACTOR -lt $MAXSIZE ]; then
+          FACTOR=3000
+          FILESIZE=$SIZE3000
+        fi
+      else
+        FACTOR=2000
+        FILESIZE=$SIZE2000
+        MAXSIZE=$FACTOR
+      fi
+    elif [ $FACTOR == 3000 ]; then
+      if [ "$COMPARISON" == "smaller" ]; then
+        if [ $FACTOR -lt $MAXSIZE ]; then
+          FACTOR=3500
+          FILESIZE=$SIZE3500
+        fi
+      else
+        FACTOR=2500
+        FILESIZE=$SIZE2500
+        MAXSIZE=$FACTOR
+      fi
+    elif [ $FACTOR == 3500 ]; then
+      if [ "$COMPARISON" == "smaller" ]; then
+        if [ $FACTOR -lt $MAXSIZE ]; then
+          FACTOR=4000
+          FILESIZE=$SIZE4000
+        fi
+      else
+        FACTOR=3000
+        FILESIZE=$SIZE3000
+        MAXSIZE=$FACTOR
+      fi
+    elif [ $FACTOR == 4000 ]; then
+      if [ "$COMPARISON" == "smaller" ]; then
+        if [ $FACTOR -lt $MAXSIZE ]; then
+          FACTOR=5000
+          FILESIZE=$SIZE5000
+        fi
+      else
+        FACTOR=3500
+        FILESIZE=$SIZE3500
+        MAXSIZE=$FACTOR
+      fi
+    elif [ $FACTOR == 5000 ]; then
+      if [ "$COMPARISON" == "smaller" ]; then
+        if [ $FACTOR -lt $MAXSIZE ]; then
+          FACTOR=6000
+          FILESIZE=$SIZE6000
+        fi
+      else
+        FACTOR=4000
+        FILESIZE=$SIZE4000
+        MAXSIZE=$FACTOR
+      fi
+    elif [ $FACTOR == 6000 ]; then
+      if [ "$COMPARISON" == "smaller" ]; then
+        if [ $FACTOR -lt $MAXSIZE ]; then
+          FACTOR=7000
+          FILESIZE=$SIZE7000
+        fi
+      else
+        FACTOR=5000
+        FILESIZE=$SIZE5000
+        MAXSIZE=$FACTOR
+      fi
+    fi
+
+    # stop checking if timeout was exceeded
+    MAXTSECONDS=
+    COMPARISON=`echo | awk -v me=$TOTALSECONDS -v mi=9 '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
+    if [ "$COMPARISON" == "greater" ]; then
+      TOOSLOW=1
+      break
+    fi
+  done
 
   # delete start time file
   if [ -f $STSFILE ]; then
