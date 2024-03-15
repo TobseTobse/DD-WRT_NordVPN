@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v11.01                                        #
+#   VPN connector script v11.02                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -287,7 +287,7 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
 
           # parse NordVPN servers list with PHP
           # and find current exit node
-          echo -n ?
+          echo -n o
           SERVERINFO=
           if [ "$CHECKMAXLOAD" == "yes" ] && [ "$CORRECTCOUNTRY" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
             TOPARSER="$SERVER|$SERVERSJSON"
@@ -354,7 +354,6 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
   # show server information to user
   echo
   if [ "$CHECKMAXLOAD" == "yes" ] && [ "$SERVERINFO" != "" ]; then
-    echo !
     echo -e "\033[1;32mServer $SERVER fulfills maximum load rule ($SERVERLOAD% <= $MAXLOAD%).\033[0m"
     echo "$SERVERINFO"
   fi
