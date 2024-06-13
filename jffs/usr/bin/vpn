@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v11.02                                        #
+#   VPN connector script v11.04                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -287,9 +287,11 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
 
           # parse NordVPN servers list with PHP
           # and find current exit node
-          echo -n o
+          echo
+          echo Potential candidate: $SERVER
           SERVERINFO=
           if [ "$CHECKMAXLOAD" == "yes" ] && [ "$CORRECTCOUNTRY" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
+            echo -n Checking server load...
             TOPARSER="$SERVER|$SERVERSJSON"
             SERVERINFO=`echo $TOPARSER|php -nr '
               $input = explode("|", fgets(STDIN));
@@ -324,6 +326,14 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
             else
               LOADISOKAY=no
             fi
+
+            # inform user about rule mismatch
+            if [ "$LOADISOKAY" == "no" ]; then
+              echo
+              echo -e "\033[1;31mServer $SERVER doesn't fulfill maximum load rule ($SERVERLOAD% > $MAXLOAD%).\033[0m"
+              echo -n Finding another server matching the given criteria...
+            fi
+
           fi
         fi
       fi
@@ -354,8 +364,9 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
   # show server information to user
   echo
   if [ "$CHECKMAXLOAD" == "yes" ] && [ "$SERVERINFO" != "" ]; then
-    echo -e "\033[1;32mServer $SERVER fulfills maximum load rule ($SERVERLOAD% <= $MAXLOAD%).\033[0m"
-    echo "$SERVERINFO"
+      echo
+      echo -e "\033[1;32mServer $SERVER fulfills maximum load rule ($SERVERLOAD% <= $MAXLOAD%).\033[0m"
+      echo "$SERVERINFO"
   fi
 
   # init

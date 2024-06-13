@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Startup script v3.03                                               #
+#   Startup script v3.04                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2018                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -45,6 +45,13 @@ fi
 if [ "$UPDATEONSTARTUP" == "yes" ]; then
   update
 fi
+
+# prevent early reboot if first connection takes too long
+if [ -f $LTRFILE ]; then
+  rm -f $LTRFILE
+fi
+NOWSTAMP=`date +%s`
+echo $NOWSTAMP >> $LTRFILE
 
 # execute speed check
 $SPEEDTESTSCRIPT
