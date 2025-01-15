@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v11.04                                        #
+#   VPN connector script v12.01                                        #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -22,8 +22,8 @@ if [ -f "$DIRNAME/myconfig" ]; then
   source $DIRNAME/myconfig
 fi
 
+SERVERSJSONFILE=$JFFSPATH/tmp/servers.json
 SERVERSLISTFILE=$JFFSPATH/servers.list
-OVPNFILESURL=https://nordvpn.com/de/ovpn/
 
 # exit if there's another instance of this script running
 VPNPROCESSES=$(ps | awk "/\/bin\/vpn/" | grep -v grep | grep -o "^[0-9]\+")
@@ -108,27 +108,32 @@ if [ -f "$SERVERSLISTFILE" ]; then
 fi
 
 # update the NordVPN servers file if it is outdated
-if [ ! -f "$SERVERSLISTFILE" ] || [ $(find "$SERVERSLISTFILE" -mtime +1 -print) ]; then
+SERVERSJSON=
+if [ ! -f "$SERVERSJSONFILE" ] || [ $(find "$SERVERSJSONFILE" -mtime +1 -print) ]; then
 
-  # download OVPN files list from NordVPN
+  # read NordVPN servers list (realtime data)
+  echo -n Retrieving server load percentages...
   if [ "$CURLSUPPORTED" == "yes" ]; then
-    OVPNHTML=$(curl --connect-timeout 3 -ks $OVPNFILESURL)
+    SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
+    echo $SERVERSJSON > $SERVERSJSONFILE
   else
-    OVPNHTML=`wget -t 3 -T 10 -q -O - $OVPNFILESURL`
+    SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
   fi
-
+  
   # parse OVPN list with PHP and write servers to file
-  PHP=`echo $SERVERSLISTFILE@@@@@$OVPNHTML|php -nr '
-    $params = explode("@@@@@", fgets(STDIN));
+  PHP=`echo $SERVERSLISTFILE@@@@@$SERVERSJSON|php -nr '
     $servers = array();
-    preg_match_all("%href=\"([^\"]+?\.ovpn)%sim", $params[1], $urls);
-    foreach ($urls[1] as $url) {
-      preg_match("%/([^/\.]+?)\.nordvpn%", $url, $server);
-      $servers[] = $server[1];
+    $params = explode("@@@@@", fgets(STDIN));
+    preg_match_all("%hostname[^\w]+?([^\.]+)%sm", $params[1], $hits);
+    foreach ($hits[1] as $hit) {
+      $servers[] = substr($hit, 2);
     }
     file_put_contents(trim($params[0]), implode("\n", $servers));
   '`
+else
 
+  # read servers JSON from cache
+  SERVERSJSON=`cat $SERVERSJSONFILE`
 fi
 
 # read servers from file
@@ -214,19 +219,7 @@ fi
 rm -f $MYTMPDIR/servers.tmp
 rm -f $MYTMPDIR/exservers.tmp
 
-# download server loads if specified by config
-if [ "$CHECKMAXLOAD" == "yes" ]; then
-
-  # read NordVPN servers list (realtime data)
-  SERVERSJSON=
-  echo -n Retrieving server load percentages...
-  if [ "$CURLSUPPORTED" == "yes" ]; then
-    SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
-  else
-    SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
-  fi
-fi
-
+# find a server fulfilling the defined rules
 RETRIESDONE=0
 while [ $RETRIESDONE -lt $MAXTRIES ]; do
 
@@ -290,6 +283,7 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
           echo
           echo Potential candidate: $SERVER
           SERVERINFO=
+
           if [ "$CHECKMAXLOAD" == "yes" ] && [ "$CORRECTCOUNTRY" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
             echo -n Checking server load...
             TOPARSER="$SERVER|$SERVERSJSON"

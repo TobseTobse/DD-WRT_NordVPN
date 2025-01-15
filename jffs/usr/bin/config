@@ -114,7 +114,7 @@ IPADDRESSURLS=api.ipify.org,checkip.amazonaws.com,ip.tyk.nu,whatismyip.akamai.co
 # city, country, ip, org, region
 IPINFOURL=https://ipinfo.io
 
-# proxy or real URL for NordVPN servers
+# URL with JSON for NordVPN servers
 SERVERLISTURL=https://api.nordvpn.com/v1/servers?limit=16384
 
 # country names JSON URL
