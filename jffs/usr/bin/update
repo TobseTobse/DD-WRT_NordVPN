@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Update script v3.07                                                #
+#   Update v3.08                                                       #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick and mounted on /jffs.   #
@@ -13,14 +13,20 @@
 #                                                                      #
 ########################################################################
 
-echo Update invoked.
+# show header
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+HEADER=`awk 'NR==5{ print; }' $DIRNAME/$(basename "$0") | tr "#" " " | xargs`
+echo
+echo -e "\033[1;37m=====[ $HEADER ]=====\033[0m"
+echo
 
 # load config
-DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
 source $DIRNAME/config
 if [ -f "$DIRNAME/myconfig" ]; then
-  echo -e "\033[1;36mIncluding personal config override.\033[0m"
+  echo -e "\033[1;36mApplying personal config override.\033[0m"
   source $DIRNAME/myconfig
+else
+  echo -e "\033[33mWARNING: no personal configuration file (myconfig) found.\033[0m"
 fi
 
 if test -n "$(find $DIRNAME -name '*.update' -print)"

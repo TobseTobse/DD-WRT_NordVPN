@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN config script                                                  #
+#   VPN config                                                         #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located in the same folder as the vpn,         #
@@ -89,7 +89,10 @@ MAXTRIES=10
 
 # countries to ignore when connection to a random exit node,
 # separated by comma (e.g. countries known for mass surveillance)
-IGNORECOUNTRIES="at,bh,ca,cn,de,fr,ge,in,ir,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
+IGNORECOUNTRIES="at,bh,by,ca,cn,de,fr,ge,in,ir,md,mx,nz,ru,sg,sw,sy,tr,uk,us,vn,zw"
+
+# allow the user to override the IGNORECOUNTRIES by paramter from shell
+COUNTRYOVERRIDE=yes
 
 # exclusive list of countries to connect to (don't connect to any
 # other countries than to these in this comma separated list)
@@ -195,6 +198,9 @@ SPEEDMULTIPLIER=25
 # default speed test URL if country code is unknown
 DEFAULTSPEEDTESTURL=http://speedtest.ehv.vodafone.nl:8080/speedtest
 
+# speed in MBit/s above which a speed test becomes unlikely with this router
+UNLIKELYSPEED=100
+
 
 ########################################################################
 ##                                                                    ##
@@ -219,7 +225,7 @@ MAXFAILS=5
 ########################################################################
 
 # WiFi interface name
-WIFIINTERFACE=eth2
+WIFIINTERFACE=ath0
 
 # change Wifi MAC address to random address on startup
 RANDOMMACONSTARTUP=yes

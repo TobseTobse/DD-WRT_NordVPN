@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector script v12.01                                        #
+#   VPN connector v12.03                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -11,15 +11,20 @@
 #                                                                      #
 ########################################################################
 
+# show header
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+HEADER=`awk 'NR==5{ print; }' $DIRNAME/$(basename "$0") | tr "#" " " | xargs`
 echo
-echo Connection script invoked.
+echo -e "\033[1;37m=====[ $HEADER ]=====\033[0m"
+echo
 
 # load config
-DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
 source $DIRNAME/config
 if [ -f "$DIRNAME/myconfig" ]; then
   echo -e "\033[1;36mApplying personal config override.\033[0m"
   source $DIRNAME/myconfig
+else
+  echo -e "\033[33mWARNING: no personal configuration file (myconfig) found.\033[0m"
 fi
 
 SERVERSJSONFILE=$JFFSPATH/tmp/servers.json
@@ -34,7 +39,7 @@ done
 COMPARISON=`echo | awk -v op=0$CNT '{if (op>2) printf ("greater"); else printf ("smaller");}'`
 if [ "$COMPARISON" == "greater" ]; then
   echo -e "\033[1;31mAnother instance of the vpn script is running"
-  echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait for the $MUSTWAIT seconds.\033[0m"
+  echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait a bit.\033[0m"
   exit 1
 fi
 
@@ -47,7 +52,7 @@ done
 COMPARISON=`echo | awk -v op=0$CNT '{if (op>2) printf ("greater"); else printf ("smaller");}'`
 if [ "$COMPARISON" == "greater" ]; then
   echo -e "\033[1;31mAn instance of the speed check script is running"
-  echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait for the $MUSTWAIT seconds.\033[0m"
+  echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait a bit.\033[0m"
   exit 1
 fi
 
@@ -61,7 +66,7 @@ fi
 # check if country specified by parameter 1 is disallowed by configuation
 EXCLUDECOUNTRIES=$(echo $IGNORECOUNTRIES | tr "," "\n")
 INCLUDECOUNTRIES=$(echo $EXCLUSIVECOUNTRIES | tr "," "\n")
-if [ ${#1} -eq 2 ]; then
+if [ ${#1} -eq 2 ] && [ "$1" != "rnd" ] && [ "$COUNTRYOVERRIDE" != "yes" ]; then
   for i in $EXCLUDECOUNTRIES
   do
     if [ -z "${1##*$i*}" ]; then
@@ -85,19 +90,21 @@ done
 RND=`awk -v min=1 -v max=$AMT 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
 
 # now pick the according URL from the list of lookup servers
-CNT=0
-for IPADDRESSURL in $IPADDRESSURLS ; do
-  let CNT=$CNT+1
-  if [ $CNT -eq $RND ]; then
-    IPADDRESSURL=http://$IPADDRESSURL
-    OLDIP=`wget -t 3 -T 10 -q -O - $IPADDRESSURL`
-    if [ $? -eq 0 ] || [ $CNT -gt $RND ]; then
-      break
+if [ "$1" != "" ]; then
+  CNT=0
+  for IPADDRESSURL in $IPADDRESSURLS ; do
+    let CNT=$CNT+1
+    if [ $CNT -eq $RND ]; then
+      IPADDRESSURL=http://$IPADDRESSURL
+      OLDIP=`wget -t 3 -T 10 -q -O - $IPADDRESSURL`
+      if [ $? -eq 0 ] || [ $CNT -gt $RND ]; then
+        break
+      fi
+      echo -e "\033[1;31mIP address lookup failed.\033[0m"
     fi
-    echo -e "\033[1;31mIP address lookup failed.\033[0m"
-  fi
-done
-echo "Public IP address lookup will be done via $IPADDRESSURL."
+  done
+  echo "Public IP address lookup URL: $IPADDRESSURL."
+fi
 
 # remove servers list file if it is empty
 if [ -f "$SERVERSLISTFILE" ]; then
@@ -119,6 +126,7 @@ if [ ! -f "$SERVERSJSONFILE" ] || [ $(find "$SERVERSJSONFILE" -mtime +1 -print) 
   else
     SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
   fi
+  echo
   
   # parse OVPN list with PHP and write servers to file
   PHP=`echo $SERVERSLISTFILE@@@@@$SERVERSJSON|php -nr '
@@ -151,9 +159,12 @@ PARAM1=`echo "$1" | awk '{print tolower($0)}'`
 
 # check for empty parameter 1
 if [ "$PARAM1" == "" ]; then
-  echo -e "\033[1;31mNo parameter was given.\033[0m"
+  echo -e "\033[1;31mNo parameter was given!"
+  echo
   echo Please use a two letter country shortcut or
-  echo -e "a server as parameter from the following \033[1;37m$AMTSERVERS\033[0m items list:"
+  echo -e "a server as parameter from the following $AMTSERVERS items list:\033[0m"
+  echo
+  echo "(Hit CTRL+C to break or any key to continue scrolling)"
   echo
   CNT=0
   for SERVER in $SERVERS ; do
@@ -188,7 +199,7 @@ if [ "$EXCLUSIVECOUNTRIES" != "" ] && [ "$1" == "rnd" ]; then
   done
   SERVERS=`cat $MYTMPDIR/servers.tmp`
   AMTSERVERS=`echo $SERVERS | wc -w`
-  echo -e "\033[1;37mConfiguration\033[0m narrowed down server list to \033[1;37m$AMTSERVERS\033[0m potential connection candidates."
+  echo -e "\033[1;37mConfiguration\033[0m narrowed down server list to \033[1;37m$AMTSERVERS\033[0m potential candidates."
   if [ $AMTSERVERS -lt 1 ]; then
     if [ -f $VPNLOCKFILE ]; then
       rm -f $VPNLOCKFILE
@@ -203,7 +214,7 @@ fi
 if [ ${#1} -eq 2 ]; then
   SERVERS=`cat $SERVERSLISTFILE | grep -e "$1\d"`
   AMTSERVERS=`echo $SERVERS | wc -w`
-  echo -e "\033[1;37mParameter \"$1\"\033[0m narrowed down server list to \033[1;37m$AMTSERVERS\033[0m potential connection candidates."
+  echo -e "\033[1;37m$AMTSERVERS\033[0m servers available in chosen country \033[1;37m\"$1\"\033[0m."
   if [ $AMTSERVERS -lt 1 ]; then
     if [ -f $VPNLOCKFILE ]; then
       rm -f $VPNLOCKFILE
@@ -259,7 +270,7 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
       if [ "$WRONGPROTOCOL" == "no" ]; then
         for i in $EXCLUDECOUNTRIES
         do
-          if [ -z "${PARAM1##*$i*}" ]; then
+          if [ "$COUNTRYOVERRIDE" != "yes" ] || [ -z "${PARAM1##*$i*}" ] && [ "$1" == "rnd" ]; then
             WRONGCOUNTRY=yes
             break
           fi
@@ -281,14 +292,14 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
           # parse NordVPN servers list with PHP
           # and find current exit node
           echo
-          echo Potential candidate: $SERVER
+          echo -e "\033[1;32mGot a potential server candidate: $SERVER\033[0m"
           SERVERINFO=
 
-          if [ "$CHECKMAXLOAD" == "yes" ] && [ "$CORRECTCOUNTRY" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
-            echo -n Checking server load...
-            TOPARSER="$SERVER|$SERVERSJSON"
+          if [ "$CHECKMAXLOAD" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
+            echo -n "Ascertaining server load of $SERVER..."
+            TOPARSER="$SERVER@@@@@$SERVERSJSON"
             SERVERINFO=`echo $TOPARSER|php -nr '
-              $input = explode("|", fgets(STDIN));
+              $input = explode("@@@@@", fgets(STDIN));
               $regex = "%^([a-z]+?)(\d+?)(tcp|udp)$%";
               $exitnode = preg_replace_callback($regex,
                function($hits) {
@@ -305,26 +316,30 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
                 }
               }
               $server = json_decode($hits[1]);
-              echo "Full name: " . $server->name . "\n"
-                 . "Latitude: "  . $server->locations[0]->latitude . "\n"
-                 . "Longitude: " . $server->locations[0]->longitude . "\n"
-                 . "Load: "      . $server->load;
+              echo "Full server name: " . $server->name . "\n"
+                 . "Latitude        : " . $server->locations[0]->latitude . "\n"
+                 . "Longitude       : " . $server->locations[0]->longitude . "\n"
+                 . "Server load     : " . $server->load;
               '`
-            SERVERLOAD=`echo $SERVERINFO | grep -E -o 'Load: ([0-9]+)'`
+            SERVERLOAD=`echo $SERVERINFO | grep -E -o 'Server load\s+\: ([0-9]+)'`
             SERVERLOAD=`echo $SERVERLOAD | grep -E -o '([0-9]+)'`
+
+            if [ "$SERVERINFO" == "" ]; then
+              echo
+              echo -e "\033[1;31mERROR: PHP seems to have run out of memory. Suggesting router reboot."
+            fi
             if [ "$SERVERINFO" != "" ]; then
               COMPARISON=`echo | awk -v sl=0$SERVERLOAD -v ma=$MAXLOAD '{if (sl>ma) printf ("greater"); else printf ("smaller");}'`
               if [ "$COMPARISON" == "greater" ]; then
                 LOADISOKAY=no
               fi
-            else
-              LOADISOKAY=no
             fi
 
             # inform user about rule mismatch
             if [ "$LOADISOKAY" == "no" ]; then
               echo
-              echo -e "\033[1;31mServer $SERVER doesn't fulfill maximum load rule ($SERVERLOAD% > $MAXLOAD%).\033[0m"
+              echo -e "\033[1;31mThe load is higher than the config allows ($SERVERLOAD% > MAXLOAD of $MAXLOAD%).\033[0m"
+              echo
               echo -n Finding another server matching the given criteria...
             fi
 

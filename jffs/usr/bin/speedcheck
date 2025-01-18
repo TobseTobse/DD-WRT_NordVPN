@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN speed check script v8.01                                       #
+#   Speed check v9.01                                                  #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on an external storage, mounted on     #
@@ -13,6 +13,22 @@
 #   */15 * * * * root /jffs/usr/bin/speedtest 2>&1                     #
 #                                                                      #
 ########################################################################
+
+# show header
+DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
+HEADER=`awk 'NR==5{ print; }' $DIRNAME/$(basename "$0") | tr "#" " " | xargs`
+echo
+echo -e "\033[1;37m=====[ $HEADER ]=====\033[0m"
+echo
+
+# load config
+source $DIRNAME/config
+if [ -f "$DIRNAME/myconfig" ]; then
+  echo -e "\033[1;36mApplying personal config override.\033[0m"
+  source $DIRNAME/myconfig
+else
+  echo -e "\033[33mWARNING: no personal configuration file (myconfig) found.\033[0m"
+fi
 
 # get a random speed server for the current country
 get_random_speedserver () {
@@ -51,16 +67,6 @@ get_random_speedserver () {
     SPEEDSERVER=""
   fi
 }
-
-echo Speed check invoked.
-
-# load config
-DIRNAME="$( cd "$( dirname "$0" )" && pwd )"
-source $DIRNAME/config
-if [ -f "$DIRNAME/myconfig" ]; then
-  echo -e "\033[1;36mIncluding personal config override.\033[0m"
-  source $DIRNAME/myconfig
-fi
 
 # log script call
 if [ "$LOGGING" == "yes" ]; then
@@ -210,17 +216,33 @@ if [ ! -z "$VPNROUTE" ]; then
     TOOSLOW=1
     if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
       MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
-      TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+      if [ $i -gt 6 ]; then
+        TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+      fi
       let MEASUREMENTS=$MEASUREMENTS+1
-      echo -e "\033[1;37mDownload speed #$i was $MEASUREDSPEED Mbit/s.\033[0m"
+      COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MINIMUMSPEED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
+      if [ "$COMPARISON" == "greater" ]; then
+        echo -e "\033[1;32mDownload speed #$i was $MEASUREDSPEED Mbit/s (> MINIMUMSPEED of $MINIMUMSPEED Mbit/s).\033[0m"
+      else
+        echo -e "\033[1;31mDownload speed #$i was $MEASUREDSPEED Mbit/s (< MINIMUMSPEED of $MINIMUMSPEED Mbit/s).\033[0m"
+      fi
       TOOSLOW=0
     fi
 
     # check if speed is realistic
+    COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$UNLIKELYSPEED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
+    if [ "$COMPARISON" == "greater" ]; then
+      echo -e "\033[1;31mMeasured speed seems unlikely ($MEASUREDSPEED Mbit/s > UNLIKELYSPEED of $UNLIKELYSPEED Mbit/s).\033[0m"
+      SPEEDSERVER=""
+      get_random_speedserver
+      sleep 3
+      i=0
+      continue
+    fi
     MAXALLOWED=`echo $ORIGFASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
     COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MAXALLOWED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
     if [ "$COMPARISON" == "greater" ]; then
-      echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED Mbit/s seems  listic, compared to previus maximum of $ORIGFASTESTSPEED Mbit/s.\033[0m"
+      echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED Mbit/s seems unrealistic, compared to previus maximum of $ORIGFASTESTSPEED Mbit/s.\033[0m"
       SPEEDSERVER=""
       get_random_speedserver
       sleep 3
@@ -337,7 +359,7 @@ if [ ! -z "$VPNROUTE" ]; then
     # stop checking if timeout was exceeded
     MAXTSECONDS=
     COMPARISON=`echo | awk -v me=$TOTALSECONDS -v mi=9 '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
-    if [ "$COMPARISON" == "greater" ]; then
+    if [ "$COMPARISON" == "greater" ] && [ $i -gt 3 ]; then
       TOOSLOW=1
       break
     fi
@@ -350,16 +372,16 @@ if [ ! -z "$VPNROUTE" ]; then
 
   echo
   if [ "$MEASUREDSPEED" == "" ]; then
-    echo -e "\033[1;31mCouldn't measure speed. Maybe test server blocks VPNs.\033[0m"
+    echo -e "\033[1;31mCouldn't measure speed. Maybe the test server blocks VPNs.\033[0m"
     if [ -f $STSFILE ]; then
       rm -f $STSFILE
     fi
-    exit 1
+    return 1
   else
 
-    AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/${MEASUREMENTS}}")
+    AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/4}")
     if [ "$TOOSLOW" -eq 0 ]; then
-      echo -e "\033[1;96mThis equals an average speed of $AVERAGESPEED Mbit/s.\033[0m"
+      echo -e "\033[1;96mThe last four measurements equal an average speed of $AVERAGESPEED Mbit/s.\033[0m"
 
       # prepare logging
       CURRENTSERVER=`cat $CURRENTSERVERFILE`
@@ -370,7 +392,7 @@ if [ ! -z "$VPNROUTE" ]; then
       if [ "$COMPARISON" == "greater" ]; then
         # log good speed to file
         echo $NOWSTAMP $CURRENTSERVER: $AVERAGESPEED Mbit/s >> $GOODLOGFILE
-        echo -e "\033[1;32mThat's faster than the desired minimum of $MINIMUMSPEED Mbit/s.\033[0m"
+        echo -e "\033[1;32mThat's faster than the desired MINIMUMSPEED of $MINIMUMSPEED Mbit/s.\033[0m"
         if [ -f $STSFILE ]; then
           rm -f $STSFILE
         fi
@@ -400,14 +422,14 @@ if [ ! -z "$VPNROUTE" ]; then
         else
           COUNTRY=`cat $JFFSPATH/$COUNTRIESJSON | grep -E -o "\"$COUNTRYCODE\": \"[^\\"]{3,}\"" | grep -E -o '[^\"]{3,}'`
         fi
-        echo -e "Country of VPN exit node is \033[1;37m$COUNTRY\033[0m."
+        echo -e "Country of VPN server is \033[1;37m$COUNTRY\033[0m."
         echo
-        exit
+        return
       fi
     fi
 
     # log miserable speed to file
-    echo -e "\033[1;31mThe measured speed was less than the configured minimum of $MINIMUMSPEED Mbit/s.\033[0m"
+    echo -e "\033[1;31mThe average measured speed was too low: $AVERAGESPEED < MINIMUMSPEED of $MINIMUMSPEED Mbit/s.\033[0m"
     if [ -f $CURRENTSERVERFILE ]; then
       echo $NOWSTAMP $CURRENTSERVER: $AVERAGESPEED Mbit/s >> $BADLOGFILE
     fi
@@ -418,7 +440,7 @@ if [ "$1" == "checkonly" ]; then
   if [ -f $STSFILE ]; then
     rm -f $STSFILE
   fi
-  exit
+  return
 fi
 
 # speed check failed requirements, so (re)invoke vpn script
@@ -428,8 +450,10 @@ fi
 
 if [ "$1" != "readonly" ]; then
   if [ "$1" != "" ]; then
+    echo -e "\033[1;36mReinvoking VPN script with country \"$1\".\033[0m"
     $VPNSCRIPT $1
   else
+    echo -e "\033[1;36mReinvoking VPN script with a random country.\033[0m"
     $VPNSCRIPT rnd
   fi
 fi
