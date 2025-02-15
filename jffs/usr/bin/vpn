@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector v12.03                                               #
+#   VPN connector v12.04                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -31,7 +31,7 @@ SERVERSJSONFILE=$JFFSPATH/tmp/servers.json
 SERVERSLISTFILE=$JFFSPATH/servers.list
 
 # exit if there's another instance of this script running
-VPNPROCESSES=$(ps | awk "/\/bin\/vpn/" | grep -v grep | grep -o "^[0-9]\+")
+VPNPROCESSES=$(ps | grep /usr/bin/vpn | grep -v grep | grep -o "^\s*[0-9]\+")
 CNT=0
 for VPNPROCESS in $VPNPROCESSES ; do
   let CNT=$CNT+1
