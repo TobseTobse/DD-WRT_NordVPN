@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Speed check v9.01                                                  #
+#   Speed check v10.01                                                  #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on an external storage, mounted on     #
@@ -216,10 +216,6 @@ if [ ! -z "$VPNROUTE" ]; then
     TOOSLOW=1
     if awk "BEGIN {exit !("$TOTALSECONDS" > 0)}"; then
       MEASUREDSPEED=$(awk "BEGIN {printf \"%.2f\",${FILESIZE}/${TOTALSECONDS}/1024/1024*8}")
-      if [ $i -gt 6 ]; then
-        TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
-      fi
-      let MEASUREMENTS=$MEASUREMENTS+1
       COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MINIMUMSPEED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
       if [ "$COMPARISON" == "greater" ]; then
         echo -e "\033[1;32mDownload speed #$i was $MEASUREDSPEED Mbit/s (> MINIMUMSPEED of $MINIMUMSPEED Mbit/s).\033[0m"
@@ -239,6 +235,12 @@ if [ ! -z "$VPNROUTE" ]; then
       i=0
       continue
     fi
+
+    if [ $i -ge 4 ]; then
+      TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
+      let MEASUREMENTS=$MEASUREMENTS+1
+    fi
+
     MAXALLOWED=`echo $ORIGFASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
     COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MAXALLOWED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
     if [ "$COMPARISON" == "greater" ]; then
@@ -379,9 +381,9 @@ if [ ! -z "$VPNROUTE" ]; then
     return 1
   else
 
-    AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/4}")
+    AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/$MEASUREMENTS}")
     if [ "$TOOSLOW" -eq 0 ]; then
-      echo -e "\033[1;96mThe last four measurements equal an average speed of $AVERAGESPEED Mbit/s.\033[0m"
+      echo -e "\033[1;96mThe most representative $MEASUREMENTS measurements equal an average speed of $AVERAGESPEED Mbit/s.\033[0m"
 
       # prepare logging
       CURRENTSERVER=`cat $CURRENTSERVERFILE`
