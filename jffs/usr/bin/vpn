@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector v12.05                                               #
+#   VPN connector v13.01                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -116,10 +116,10 @@ fi
 
 # update the NordVPN servers file if it is outdated
 SERVERSJSON=
-if [ ! -f "$SERVERSJSONFILE" ] || [ $(find "$SERVERSJSONFILE" -mtime +1 -print) ]; then
+if  [ ! -f "$SERVERSLISTFILE" ] || [ $(find "$SERVERSLISTFILE" -mtime +12 -print) ] || [ ! -f "$SERVERSJSONFILE" ] || [ $(find "$SERVERSJSONFILE" -mtime +1 -print) ]; then
 
   # read NordVPN servers list (realtime data)
-  echo -n Retrieving server load percentages...
+  echo -n Retrieving servers list...
   if [ "$CURLSUPPORTED" == "yes" ]; then
     SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
     echo $SERVERSJSON > $SERVERSJSONFILE
@@ -198,7 +198,7 @@ if [ "$EXCLUSIVECOUNTRIES" != "" ] && [ "$1" == "rnd" ]; then
   done
   SERVERS=`cat $MYTMPDIR/servers.tmp`
   AMTSERVERS=`echo $SERVERS | wc -w`
-  echo -e "\033[1;37mConfiguration\033[0m narrowed down server list to \033[1;37m$AMTSERVERS\033[0m potential candidates."
+  echo -e "\033[1;37mConfiguration\033[0m narrowed down server list to \033[1;93m$AMTSERVERS\033[0m potential candidates."
   if [ $AMTSERVERS -lt 1 ]; then
     if [ -f $VPNLOCKFILE ]; then
       rm -f $VPNLOCKFILE
@@ -337,7 +337,7 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
             # inform user about rule mismatch
             if [ "$LOADISOKAY" == "no" ]; then
               echo
-              echo -e "\033[1;31mThe load is higher than the config allows ($SERVERLOAD% > MAXLOAD of $MAXLOAD%).\033[0m"
+              echo -e "\033[1;31mThe server load is higher than the config allows ($SERVERLOAD% > MAXLOAD of $MAXLOAD%).\033[0m"
               echo
               echo -n Finding another server matching the given criteria...
             fi
@@ -488,17 +488,17 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
             FOUNDLINE="yes"
           fi
           if echo "$LINE" | grep -E 'net_(addr|iface|route)_' > /dev/nul; then
-            echo -e "\033[1;32m$LINE\033[0m"
+            echo -e "\033[1;92m$LINE\033[0m"
           elif echo "$LINE" | grep -E 'TUN/TAP' > /dev/nul; then
-            echo -e "\033[1;32m$LINE\033[0m"
+            echo -e "\033[1;92m$LINE\033[0m"
           elif echo "$LINE" | grep -E '/sbin/(ifconfig|route add)' > /dev/nul; then
-            echo -e "\033[1;32m$LINE\033[0m"
+            echo -e "\033[1;92m$LINE\033[0m"
           elif echo "$LINE" | grep ' OK' > /dev/nul; then
-            echo -e "\033[32m$LINE\033[0m"
+            echo -e "\033[92m$LINE\033[0m"
           elif echo "$LINE" | grep 'Initialization Sequence Completed' > /dev/nul; then
-            echo -e "\033[1;32m$LINE\033[0m"
+            echo -e "\033[1;92m$LINE\033[0m"
           elif echo "$LINE" | grep -E '(WARNING|NOTE|DEPRECATED)' > /dev/nul; then
-            echo -e "\033[33m$LINE\033[0m"
+            echo -e "\033[93m$LINE\033[0m"
           elif echo "$LINE" | grep -E '(AUTH_FAILED|timed out|Restart pause)' > /dev/nul; then
             echo -e "\033[1;31m$LINE\033[0m"
           else

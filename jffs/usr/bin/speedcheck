@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Speed check v10.01                                                  #
+#   Speed check v11.01                                                  #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on an external storage, mounted on     #
@@ -228,7 +228,18 @@ if [ ! -z "$VPNROUTE" ]; then
     # check if speed is realistic
     COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$UNLIKELYSPEED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
     if [ "$COMPARISON" == "greater" ]; then
-      echo -e "\033[1;31mMeasured speed seems unlikely ($MEASUREDSPEED Mbit/s > UNLIKELYSPEED of $UNLIKELYSPEED Mbit/s).\033[0m"
+      echo -e "\033[1;31mMeasured speed seems unlikely ($MEASUREDSPEED Mbit/s > UNLIKELYSPEED of $UNLIKELYSPEED Mbit/s). Measurement ignored.\033[0m"
+      SPEEDSERVER=""
+      get_random_speedserver
+      sleep 3
+      i=0
+      continue
+    fi
+
+    MAXALLOWED=`echo $ORIGFASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
+    COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MAXALLOWED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
+    if [ "$COMPARISON" == "greater" ]; then
+      echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED Mbit/s seems unrealistic, compared to previus maximum of $ORIGFASTESTSPEED Mbit/s. Measurement ignored.\033[0m"
       SPEEDSERVER=""
       get_random_speedserver
       sleep 3
@@ -239,17 +250,6 @@ if [ ! -z "$VPNROUTE" ]; then
     if [ $i -ge 4 ]; then
       TOTALSPEED=$(awk "BEGIN {print $TOTALSPEED + $MEASUREDSPEED}")
       let MEASUREMENTS=$MEASUREMENTS+1
-    fi
-
-    MAXALLOWED=`echo $ORIGFASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
-    COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MAXALLOWED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
-    if [ "$COMPARISON" == "greater" ]; then
-      echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED Mbit/s seems unrealistic, compared to previus maximum of $ORIGFASTESTSPEED Mbit/s.\033[0m"
-      SPEEDSERVER=""
-      get_random_speedserver
-      sleep 3
-      i=0
-      continue
     fi
 
     # update maximum speed measured ever if necessary
@@ -359,7 +359,6 @@ if [ ! -z "$VPNROUTE" ]; then
     fi
 
     # stop checking if timeout was exceeded
-    MAXTSECONDS=
     COMPARISON=`echo | awk -v me=$TOTALSECONDS -v mi=9 '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
     if [ "$COMPARISON" == "greater" ] && [ $i -gt 3 ]; then
       TOOSLOW=1
@@ -382,6 +381,11 @@ if [ ! -z "$VPNROUTE" ]; then
   else
 
     AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/$MEASUREMENTS}")
+    COMPARISON=`echo | awk -v me=$AVERAGESPEED -v mi=$MINIMUMSPEED '{if (me>mi) printf ("greater"); else printf ("smaller");}'`
+    if [ "$COMPARISON" == "greater" ]; then
+      TOOSLOW=0
+    fi
+
     if [ "$TOOSLOW" -eq 0 ]; then
       echo -e "\033[1;96mThe most representative $MEASUREMENTS measurements equal an average speed of $AVERAGESPEED Mbit/s.\033[0m"
 
@@ -431,7 +435,7 @@ if [ ! -z "$VPNROUTE" ]; then
     fi
 
     # log miserable speed to file
-    echo -e "\033[1;31mThe average measured speed was too low: $AVERAGESPEED < MINIMUMSPEED of $MINIMUMSPEED Mbit/s.\033[0m"
+    echo -e "\033[1;31mThe average measured speed was too low: $AVERAGESPEED Mbit/s < MINIMUMSPEED of $MINIMUMSPEED Mbit/s.\033[0m"
     if [ -f $CURRENTSERVERFILE ]; then
       echo $NOWSTAMP $CURRENTSERVER: $AVERAGESPEED Mbit/s >> $BADLOGFILE
     fi
