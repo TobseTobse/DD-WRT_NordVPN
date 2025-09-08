@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector v13.01                                               #
+#   VPN connector v14.01                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -194,7 +194,15 @@ if [ "$EXCLUSIVECOUNTRIES" != "" ] && [ "$1" == "rnd" ]; then
     do
       echo $i >> $MYTMPDIR/exservers.tmp
     done
-    cat $MYTMPDIR/exservers.tmp >> $MYTMPDIR/servers.tmp
+  done
+  cat $MYTMPDIR/exservers.tmp >> $MYTMPDIR/servers.tmp
+  SERVERS=`cat $MYTMPDIR/servers.tmp`
+  for SERVER in $SERVERS
+  do
+    if [ "`grep -x "$SERVER" $MYTMPDIR/servers.tmp`" == "" ]; then
+      echo $SERVER >> $MYTMPDIR/servers.tmp
+    fi
+    break
   done
   SERVERS=`cat $MYTMPDIR/servers.tmp`
   AMTSERVERS=`echo $SERVERS | wc -w`
