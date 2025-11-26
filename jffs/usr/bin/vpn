@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector v14.01                                               #
+#   VPN connector v14.02                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -129,15 +129,17 @@ if  [ ! -f "$SERVERSLISTFILE" ] || [ $(find "$SERVERSLISTFILE" -mtime +12 -print
   echo
   
   # parse OVPN list with PHP and write servers to file
+  echo -n  Parsing servers list...
   PHP=`echo $SERVERSLISTFILE@@@@@$SERVERSJSON|php -nr '
     $servers = array();
     $params = explode("@@@@@", fgets(STDIN));
-    preg_match_all("%hostname[^\w]+?([^\.]+)%sm", $params[1], $hits);
+    preg_match_all("%hostname[^\w]+?([^\.]+)\.nordvpn%sm", $params[1], $hits);
     foreach ($hits[1] as $hit) {
       $servers[] = substr($hit, 2);
     }
     file_put_contents(trim($params[0]), implode("\n", $servers));
   '`
+  echo
 else
 
   # read servers JSON from cache
