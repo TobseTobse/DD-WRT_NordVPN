@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector v14.02                                               #
+#   VPN connector v15.01                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -29,6 +29,7 @@ fi
 
 SERVERSJSONFILE=$JFFSPATH/tmp/servers.json
 SERVERSLISTFILE=$JFFSPATH/servers.list
+SERVERLOADSFILE=$JFFSPATH/serverloads
 
 # exit if there's another instance of this script running
 VPNPROCESSES=$(ps | grep /usr/bin/vpn | grep -v grep | grep -o "^\s*[0-9]\+")
@@ -115,35 +116,33 @@ if [ -f "$SERVERSLISTFILE" ]; then
 fi
 
 # update the NordVPN servers file if it is outdated
-SERVERSJSON=
 if  [ ! -f "$SERVERSLISTFILE" ] || [ $(find "$SERVERSLISTFILE" -mtime +12 -print) ] || [ ! -f "$SERVERSJSONFILE" ] || [ $(find "$SERVERSJSONFILE" -mtime +1 -print) ]; then
 
   # read NordVPN servers list (realtime data)
   echo -n Retrieving servers list...
   if [ "$CURLSUPPORTED" == "yes" ]; then
     SERVERSJSON=$(curl --connect-timeout 3 -ks $SERVERLISTURL)
-    echo $SERVERSJSON > $SERVERSJSONFILE
+    curl -kso $SERVERSJSONFILE $SERVERLISTURL
   else
-    SERVERSJSON=`wget -t 3 -T 10 -q -O - $SERVERLISTURL`
+    wget -q -t 3 -T 10 -O $SERVERSJSONFILE $SERVERLISTURL
   fi
   echo
-  
-  # parse OVPN list with PHP and write servers to file
-  echo -n  Parsing servers list...
-  PHP=`echo $SERVERSLISTFILE@@@@@$SERVERSJSON|php -nr '
-    $servers = array();
-    $params = explode("@@@@@", fgets(STDIN));
-    preg_match_all("%hostname[^\w]+?([^\.]+)\.nordvpn%sm", $params[1], $hits);
-    foreach ($hits[1] as $hit) {
-      $servers[] = substr($hit, 2);
-    }
-    file_put_contents(trim($params[0]), implode("\n", $servers));
-  '`
-  echo
-else
 
-  # read servers JSON from cache
-  SERVERSJSON=`cat $SERVERSJSONFILE`
+  if [ -s $SERVERSJSONFILE ]; then
+  
+    # parse OVPN list and write servers to file
+    echo -n  Parsing server loads...
+    grep -o '"hostname"[^"]*"[^}]*"load"[^0-9]*[0-9][0-9]*' $SERVERSJSONFILE | \
+    sed 's/"hostname":"\([^".]*\)[^"]*","load":\([0-9][0-9]*\)/\1:\2/' > $SERVERLOADSFILE
+    echo
+
+    # create file with sorted server names
+    echo -n  Sorting server list...
+    sed 's/:.*//' $SERVERLOADSFILE | sort -u > $SERVERSLISTFILE
+    echo
+  fi
+
+  echo
 fi
 
 # read servers from file
@@ -298,60 +297,33 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
             done
           fi
 
-          # parse NordVPN servers list with PHP
-          # and find current exit node
+          # find current exit node in list with server loads
           echo
           echo -e "\033[1;32mGot a potential server candidate: $SERVER\033[0m"
-          SERVERINFO=
 
-          if [ "$CHECKMAXLOAD" == "yes" ] && [ "$SERVERSJSON" != "" ]; then
+          if [ "$CHECKMAXLOAD" == "yes" ] && [ -s $SERVERLOADSFILE ]; then
+            LOADISOKAY=yes
             echo -n "Ascertaining server load of $SERVER..."
-            TOPARSER="$SERVER@@@@@$SERVERSJSON"
-            SERVERINFO=`echo $TOPARSER|php -nr '
-              $input = explode("@@@@@", fgets(STDIN));
-              $regex = "%^([a-z]+?)(\d+?)(tcp|udp)$%";
-              $exitnode = preg_replace_callback($regex,
-               function($hits) {
-                 return $hits[1] . (int)$hits[2];
-               }, $input[0]);
-              if (!preg_match("%(.{0,303}\"hostname\"\:\"" . $exitnode . "\.nordvpn\.com\""
-                            . ".+?\"version\"\:.+?\}\}\]\})%sm", $input[1], $hits)) {
-                return;
-              }
-              $part = $hits[1];
-              if (!preg_match("%\}\}\]\},(.+?\}\}\]\})%sm", $part, $hits)) {
-                if (!preg_match("%^\[(.+?\}\}\]\})%sm", $part, $hits)) {
-                  return;
-                }
-              }
-              $server = json_decode($hits[1]);
-              echo "Full server name: " . $server->name . "\n"
-                 . "Latitude        : " . $server->locations[0]->latitude . "\n"
-                 . "Longitude       : " . $server->locations[0]->longitude . "\n"
-                 . "Server load     : " . $server->load;
-              '`
-            SERVERLOAD=`echo $SERVERINFO | grep -E -o 'Server load\s+\: ([0-9]+)'`
-            SERVERLOAD=`echo $SERVERLOAD | grep -E -o '([0-9]+)'`
-
-            if [ "$SERVERINFO" == "" ]; then
-              echo
-              echo -e "\033[1;31mERROR: PHP seems to have run out of memory. Suggesting router reboot."
-            fi
-            if [ "$SERVERINFO" != "" ]; then
+            SERVERLOAD=$(grep "^$SERVER:" "$SERVERLOADSFILE" | sed 's/.*://')
+            if [ "$SERVERLOAD" == "" ]; then
+              echo -e "\033[1;31mERROR: Couldn't determine load of $SERVER. Ignoring load rule."
+            else
               COMPARISON=`echo | awk -v sl=0$SERVERLOAD -v ma=$MAXLOAD '{if (sl>ma) printf ("greater"); else printf ("smaller");}'`
               if [ "$COMPARISON" == "greater" ]; then
                 LOADISOKAY=no
               fi
             fi
-
-            # inform user about rule mismatch
-            if [ "$LOADISOKAY" == "no" ]; then
+          
+            # inform user about server load
+            if [ "$LOADISOKAY" == "yes" ]; then
+              echo
+              echo -e "\033[1;32mThe server load is okay ($SERVERLOAD% <= MAXLOAD of $MAXLOAD%).\033[0m"
+            else
               echo
               echo -e "\033[1;31mThe server load is higher than the config allows ($SERVERLOAD% > MAXLOAD of $MAXLOAD%).\033[0m"
               echo
               echo -n Finding another server matching the given criteria...
             fi
-
           fi
         fi
       fi
