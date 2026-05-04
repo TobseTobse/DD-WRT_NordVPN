@@ -208,6 +208,9 @@ UNLIKELYSPEED=100
 ##                                                                    ##
 ########################################################################
 
+# check WAN connection using pings
+CHECKWANWITHPINGS=no
+
 # server name to ping (please use a server name, not an IP here)
 PINGSERVER=wikipedia.org
 
