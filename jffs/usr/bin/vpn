@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector v15.01                                               #
+#   VPN connector v16.01                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -38,11 +38,12 @@ for VPNPROCESS in $VPNPROCESSES ; do
   let CNT=$CNT+1
 done
 COMPARISON=`echo | awk -v op=0$CNT '{if (op>2) printf ("greater"); else printf ("smaller");}'`
-if [ "$COMPARISON" == "greater" ]; then
+if [ "$COMPARISON" == "greater" ] || [ -d "$VPNLOCKDIR" ] ; then
   echo -e "\033[1;31mAnother instance of the vpn script is running"
   echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait a bit.\033[0m"
   exit 1
 fi
+mkdir "$VPNLOCKDIR"
 
 # exit if there's an instance of the speed check script running
 SPPROCESSES=$(ps | awk "/\/bin\/speedcheck/" | grep -v grep | grep -o "^[0-9]\+")
@@ -51,11 +52,17 @@ for SPPROCESS in $SPPROCESSES ; do
   let CNT=$CNT+1
 done
 COMPARISON=`echo | awk -v op=0$CNT '{if (op>2) printf ("greater"); else printf ("smaller");}'`
-if [ "$COMPARISON" == "greater" ]; then
+if [ "$COMPARISON" == "greater" ] || [ -f "$STSFILE" ]; then
   echo -e "\033[1;31mAn instance of the speed check script is running"
   echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait a bit.\033[0m"
   exit 1
 fi
+
+# remove lock directory when script is done
+removevpnlockdir() {
+  rm -rf "$VPNLOCKDIR"
+}
+trap removevpnlockdir EXIT
 
 # check if system supports curl command
 CURLSUPPORTED=yes
@@ -72,8 +79,8 @@ if [ ${#1} -eq 2 ] && [ "$1" != "rnd" ] && [ "$COUNTRYOVERRIDE" != "yes" ]; then
   do
     if [ -z "${1##*$i*}" ]; then
       echo -e "\033[1;31mThe country \"$1\" is disallowed by configuration.\033[0m"
-      if [ -f $VPNLOCKFILE ]; then
-        rm -f $VPNLOCKFILE
+      if [ -d $VPNLOCKDIR ]; then
+        rm -rf $VPNLOCKDIR
       fi
       exit 1
     fi
@@ -209,8 +216,8 @@ if [ "$EXCLUSIVECOUNTRIES" != "" ] && [ "$1" == "rnd" ]; then
   AMTSERVERS=`echo $SERVERS | wc -w`
   echo -e "\033[1;37mConfiguration\033[0m narrowed down server list to \033[1;93m$AMTSERVERS\033[0m potential candidates."
   if [ $AMTSERVERS -lt 1 ]; then
-    if [ -f $VPNLOCKFILE ]; then
-      rm -f $VPNLOCKFILE
+    if [ -d $VPNLOCKDIR ]; then
+      rm -rf $VPNLOCKDIR
     fi
     exit 1
   fi
@@ -224,8 +231,8 @@ if [ ${#1} -eq 2 ]; then
   AMTSERVERS=`echo $SERVERS | wc -w`
   echo -e "\033[1;37m$AMTSERVERS\033[0m servers available in chosen country \033[1;37m\"$1\"\033[0m."
   if [ $AMTSERVERS -lt 1 ]; then
-    if [ -f $VPNLOCKFILE ]; then
-      rm -f $VPNLOCKFILE
+    if [ -d $VPNLOCKDIR ]; then
+      rm -rf $VPNLOCKDIR
     fi
     echo -e "\033[1;31mThese aren't the servers you are looking for.\033[0m"
     exit 1
@@ -340,8 +347,8 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
       SERVERS=`cat $MYTMPDIR/filteredservers.tmp | grep -v "$PARAM1"`
       AMTSERVERS=`echo $SERVERS | wc -w`
       if [ $AMTSERVERS -lt 1 ]; then
-        if [ -f $VPNLOCKFILE ]; then
-          rm -f $VPNLOCKFILE
+        if [ -d $VPNLOCKDIR ]; then
+          rm -rf $VPNLOCKDIR
         fi
         echo
         echo -e "\033[1;31mNo server matches the specified criteria. Try lowering restrictions in your configuration.\033[0m"
@@ -628,11 +635,11 @@ while [ $RETRIESDONE -lt $MAXTRIES ]; do
       echo -e "The exit node's service provider is $ISP."
       echo
       RETRIESDONE=$MAXTRIES
-      $SPEEDTESTSCRIPT $1
-      if [ -f $VPNLOCKFILE ]; then
-        rm -f $VPNLOCKFILE
+      if [ -d $VPNLOCKDIR ]; then
+        rm -rf $VPNLOCKDIR
       fi
-      exit
+      sh $SPEEDTESTSCRIPT $1 < /dev/null
+      exit 0
     fi
   fi
   let RETRIESDONE=$RETRIESDONE+1

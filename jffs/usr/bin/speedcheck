@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Speed check v11.01                                                  #
+#   Speed check v12.01                                                  #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on an external storage, mounted on     #
@@ -28,6 +28,19 @@ if [ -f "$DIRNAME/myconfig" ]; then
   source $DIRNAME/myconfig
 else
   echo -e "\033[33mWARNING: no personal configuration file (myconfig) found.\033[0m"
+fi
+
+# exit if there's an instance of the vpn script running
+VPNPROCESSES=$(ps | grep /usr/bin/vpn | grep -v grep | grep -o "^\s*[0-9]\+")
+CNT=0
+for VPNPROCESS in $VPNPROCESSES ; do
+  let CNT=$CNT+1
+done
+COMPARISON=`echo | awk -v op=0$CNT '{if (op>2) printf ("greater"); else printf ("smaller");}'`
+if [ "$COMPARISON" == "greater" ] || [ -d "$VPNLOCKDIR" ] ; then
+  echo -e "\033[1;31mAn instance of the vpn script is running"
+  echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait a bit.\033[0m"
+  exit 1
 fi
 
 # get a random speed server for the current country
@@ -143,13 +156,14 @@ if [ ! -z "$VPNROUTE" ]; then
   if [ -f $STSFILE ]; then
     LASTSTART=`cat $STSFILE`
     LSPTAGO=`expr $NOWSTAMP - $LASTSTART`
-    echo -e "\033[1;31mLast speed check started $LSPTAGO seconds ago and is still running.\033[0m"
+    echo -e "\033[1;31mLast speed check has started $LSPTAGO seconds before and is still running.\033[0m"
     BOOTDIFF=`expr $MINREBOOTPERIOD + 777`
     if [ -f $LTRFILE ]; then
       LASTBOOTED=`cat $LTRFILE`
       BOOTDIFF=`expr $NOWSTAMP - $LASTBOOTED`
     fi
     if [ "$BOOTDIFF" -ge "$MINREBOOTPERIOD" ]; then
+      echo -n Rebooting in $REBOOTWAIT seconds...
       sleep $REBOOTWAIT
       if [ -f $LTRFILE ]; then
         rm -f $LTRFILE
@@ -157,6 +171,7 @@ if [ ! -z "$VPNROUTE" ]; then
       echo $NOWSTAMP >> $LTRFILE
       reboot
     fi
+    exit 1
   fi
   echo $NOWSTAMP >> $STSFILE
 
@@ -377,7 +392,7 @@ if [ ! -z "$VPNROUTE" ]; then
     if [ -f $STSFILE ]; then
       rm -f $STSFILE
     fi
-    return 1
+    exit 1
   else
 
     AVERAGESPEED=$(awk "BEGIN {printf \"%.2f\",${TOTALSPEED}/$MEASUREMENTS}")
@@ -402,8 +417,8 @@ if [ ! -z "$VPNROUTE" ]; then
         if [ -f $STSFILE ]; then
           rm -f $STSFILE
         fi
-        if [ -f $VPNLOCKFILE ]; then
-          rm -f $VPNLOCKFILE
+        if [ -d $VPNLOCKDIR ]; then
+          rm -rf $VPNLOCKDIR
         fi
 
         # check if system supports curl command
@@ -430,7 +445,7 @@ if [ ! -z "$VPNROUTE" ]; then
         fi
         echo -e "Country of VPN server is \033[1;37m$COUNTRY\033[0m."
         echo
-        return
+        exit 0
       fi
     fi
 
@@ -446,20 +461,20 @@ if [ "$1" == "checkonly" ]; then
   if [ -f $STSFILE ]; then
     rm -f $STSFILE
   fi
-  return
+  exit 0
 fi
 
 # speed check failed requirements, so (re)invoke vpn script
-if [ -f $VPNLOCKFILE ]; then
-  rm -f $VPNLOCKFILE
+if [ -d $VPNLOCKDIR ]; then
+  rm -rf $VPNLOCKDIR
 fi
 
 if [ "$1" != "readonly" ]; then
   if [ "$1" != "" ]; then
     echo -e "\033[1;36mReinvoking VPN script with country \"$1\".\033[0m"
-    $VPNSCRIPT $1
+    sh $VPNSCRIPT $1
   else
     echo -e "\033[1;36mReinvoking VPN script with a random country.\033[0m"
-    $VPNSCRIPT rnd
+    sh $VPNSCRIPT rnd
   fi
 fi

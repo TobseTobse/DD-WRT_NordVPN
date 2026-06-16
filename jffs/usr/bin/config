@@ -124,7 +124,7 @@ SERVERLISTURL=https://api.nordvpn.com/v1/servers?limit=16384
 COUNTRYNAMESJSONURL=http://country.io/names.json
 
 # path to lock file
-VPNLOCKFILE=$MYTMPDIR/vpn.lock
+VPNLOCKDIR=$MYTMPDIR/vpn.lock
 
 # minimum time to wait till retry after authentication failed
 AUTHFAILEDWAIT=120
