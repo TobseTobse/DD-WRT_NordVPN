@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   Speed check v12.01                                                  #
+#   Speed check v13.01                                                  #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on an external storage, mounted on     #
@@ -37,7 +37,7 @@ for VPNPROCESS in $VPNPROCESSES ; do
   let CNT=$CNT+1
 done
 COMPARISON=`echo | awk -v op=0$CNT '{if (op>2) printf ("greater"); else printf ("smaller");}'`
-if [ "$COMPARISON" == "greater" ] || [ -d "$VPNLOCKDIR" ] ; then
+if [ "$COMPARISON" == "greater" ] || [ -f "$VPNLOCKFILE" ] ; then
   echo -e "\033[1;31mAn instance of the vpn script is running"
   echo -e "\033[1;31mUse the killvpn command to kill this instance and retry after that or simply wait a bit.\033[0m"
   exit 1
@@ -220,7 +220,24 @@ if [ ! -z "$VPNROUTE" ]; then
 
     # download a random image to measure the time it took
     TIMEOUT=10
-    RESULT=`time curl -ks -o /dev/null -m $TIMEOUT $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
+
+    tries=0
+    if [ -f /tmp/speedchunk ]; then
+      rm /tmp/speedchunk
+    fi
+    while [ ! -s /tmp/speedchunk ] && [ $tries -lt 10 ]; do
+      let tries=$tries+1
+      RESULT=`time curl -ks -o /tmp/speedchunk -m $TIMEOUT $URL/random${FACTOR}x${FACTOR}.jpg 2>&1`
+      if [ ! -s /tmp/speedchunk ]; then
+        OLDPSEEDSERVER=$SPEEDSERVER
+        changes=0
+        while [ "$SPEEDSERVER" == "$OLDPSEEDSERVER" ] && [ $changes -lt 10 ]; do
+          SPEEDSERVER=""
+          get_random_speedserver
+          let changes=$changes+1
+        done
+      fi
+    done
 
     # do string acrobatics to calculate connection speed...
     MEASUREDSPEED=""
@@ -243,10 +260,16 @@ if [ ! -z "$VPNROUTE" ]; then
     # check if speed is realistic
     COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$UNLIKELYSPEED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
     if [ "$COMPARISON" == "greater" ]; then
-      echo -e "\033[1;31mMeasured speed seems unlikely ($MEASUREDSPEED Mbit/s > UNLIKELYSPEED of $UNLIKELYSPEED Mbit/s). Measurement ignored.\033[0m"
-      SPEEDSERVER=""
-      get_random_speedserver
-      sleep 3
+      echo -e "\033[1;31mUnlikely measurement of $MEASUREDSPEED Mbit/s (> UNLIKELYSPEED of $UNLIKELYSPEED Mbit/s) ignored.\033[0m"
+      OLDPSEEDSERVER=$SPEEDSERVER
+      changes=0
+      while [ "$SPEEDSERVER" == "$OLDPSEEDSERVER" ] && [ $changes -lt 10 ]; do
+        SPEEDSERVER=""
+        get_random_speedserver
+        let changes=$changes+1
+      done
+      echo -e "Now testing against \033[1;37m$SPEEDSERVER\033[0m."
+      sleep 7
       i=0
       continue
     fi
@@ -254,10 +277,16 @@ if [ ! -z "$VPNROUTE" ]; then
     MAXALLOWED=`echo $ORIGFASTESTSPEED $SPEEDMULTIPLIER | awk '{print $1 * $2}'`
     COMPARISON=`echo | awk -v ms=$MEASUREDSPEED -v ma=$MAXALLOWED '{if (ms>ma) printf ("greater"); else printf ("smaller");}'`
     if [ "$COMPARISON" == "greater" ]; then
-      echo -e "\033[1;31mMeasured speed of $MEASUREDSPEED Mbit/s seems unrealistic, compared to previus maximum of $ORIGFASTESTSPEED Mbit/s. Measurement ignored.\033[0m"
-      SPEEDSERVER=""
-      get_random_speedserver
-      sleep 3
+      echo -e "\033[1;31mUnlikely measurement of $MEASUREDSPEED Mbit/s (compared to previus maximum of $ORIGFASTESTSPEED Mbit/s) ignored.\033[0m"
+      OLDPSEEDSERVER=$SPEEDSERVER
+      changes=0
+      while [ "$SPEEDSERVER" == "$OLDPSEEDSERVER" ] && [ $changes -lt 10 ]; do
+        SPEEDSERVER=""
+        get_random_speedserver
+        let changes=$changes+1
+      done
+      echo -e "Now testing against \033[1;37m$SPEEDSERVER\033[0m."
+      sleep 7
       i=0
       continue
     fi
@@ -417,8 +446,8 @@ if [ ! -z "$VPNROUTE" ]; then
         if [ -f $STSFILE ]; then
           rm -f $STSFILE
         fi
-        if [ -d $VPNLOCKDIR ]; then
-          rm -rf $VPNLOCKDIR
+        if [ -f $VPNLOCKFILE ]; then
+          rm $VPNLOCKFILE
         fi
 
         # check if system supports curl command
@@ -465,8 +494,8 @@ if [ "$1" == "checkonly" ]; then
 fi
 
 # speed check failed requirements, so (re)invoke vpn script
-if [ -d $VPNLOCKDIR ]; then
-  rm -rf $VPNLOCKDIR
+if [ -f $VPNLOCKFILE ]; then
+  rm $VPNLOCKFILE
 fi
 
 if [ "$1" != "readonly" ]; then
