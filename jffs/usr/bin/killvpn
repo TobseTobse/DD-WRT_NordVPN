@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN kill script v1.04                                              #
+#   VPN kill script v1.05                                              #
 #   (c) by Tobse (cthullu@protonmail.com) in 2017                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -17,8 +17,8 @@ source $DIRNAME/config
 cd $MYTMPDIR
 
 # remove VPN task lock
-if [ -d $VPNLOCKDIR ]; then
-  rm -rf $VPNLOCKDIR
+if [ -f $VPNLOCKFILE ]; then
+  rm $VPNLOCKFILE
 fi
 
 # remove speedcheck task lock
