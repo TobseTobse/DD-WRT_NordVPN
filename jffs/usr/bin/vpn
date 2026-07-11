@@ -2,7 +2,7 @@
 
 ########################################################################
 #                                                                      #
-#   VPN connector v17.02                                               #
+#   VPN connector v17.03                                               #
 #   (c) by Tobse (cthullu@protonmail.com) in 2022                      #
 #                                                                      #
 #   This script must be located on a USB stick, mounted on /jffs and   #
@@ -51,7 +51,9 @@ fi
 if [ "$COMPARISON" == "greater" ] || [ "$VPNLOCKFILEAGE" -gt 3600 ] ; then
   if [ -t 0 ]; then
     ps | grep /usr/bin/vpn | grep -v $$ | awk '{print $1}' | xargs kill >/dev/null 2>/dev/null
-    rm "$VPNLOCKFILE"
+    if [ -f "$VPNLOCKFILE" ]; then
+      rm "$VPNLOCKFILE"
+    fi
     echo All other instances of the vpn script have been killed
   else
     echo -e "\033[1;31mAnother instance of the vpn script is running"
@@ -81,7 +83,9 @@ fi
 if [ "$COMPARISON" == "greater" ] || [ "$STSFILEAGE" -gt 3600 ]; then
   if [ -t 0 ]; then
     ps | grep /usr/bin/speedcheck | grep -v $$ | awk '{print $1}' | xargs kill >/dev/null 2>/dev/null
-    rm "$STSFILE"
+    if [ -f "$STSFILE" ]; then
+      rm "$STSFILE"
+    fi
     echo All instances of the speedcheck script have been killed
   else
     echo -e "\033[1;31mAn instance of the speed check script is running"
@@ -92,7 +96,9 @@ fi
 
 # remove lock directory when script is done
 removevpnlockfile() {
-  rm "$VPNLOCKFILE"
+  if [ -f "$VPNLOCKFILE" ]; then
+    rm "$VPNLOCKFILE"
+  fi
 }
 trap removevpnlockfile EXIT
 
@@ -149,7 +155,7 @@ fi
 # remove servers list file if it is empty
 if [ -f "$SERVERSLISTFILE" ]; then
   SERVERS=`cat $SERVERSLISTFILE`
-  if [ "$SERVERS" == "" ]; then
+  if [ "$SERVERS" == "" ] && [ -f "$SERVERSLISTFILE" ]; then
     rm $SERVERSLISTFILE
   fi
 fi
@@ -274,8 +280,12 @@ else
 fi
 
 # remove temporary files
-rm -f $MYTMPDIR/servers.tmp
-rm -f $MYTMPDIR/exservers.tmp
+if [ -f "$MYTMPDIR/servers.tmp" ]; then
+  rm -f $MYTMPDIR/servers.tmp
+fi
+if [ -f "$MYTMPDIR/exservers.tmp" ]; then
+  rm -f $MYTMPDIR/exservers.tmp
+fi
 
 # find a server fulfilling the defined rules
 RETRIESDONE=0
